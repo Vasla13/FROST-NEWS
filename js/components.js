@@ -1,19 +1,17 @@
 document.addEventListener("DOMContentLoaded", () => {
     
-    // --- 0. SYSTÈME INTRO VIDÉO (Une seule fois par session) ---
-    const hasSeenIntro = sessionStorage.getItem('frostBroadcastSeen_v1');
+    // --- 0. VIDEO INTRO SYSTEM ---
+    const hasSeenIntro = sessionStorage.getItem('frostVideoIntroSeen_v2');
 
     if(!hasSeenIntro) {
-        // 1. On bloque le scroll (cache la barre à droite) pour l'immersion
-        document.body.style.overflow = 'hidden';
+        document.body.style.overflow = 'hidden'; // Bloque le scroll
 
-        // 2. Injection du lecteur vidéo plein écran
         const introHTML = `
         <div id="video-intro-layer">
             <video id="intro-video-player" autoplay muted playsinline>
                 <source src="assets/intro.mp4" type="video/mp4">
             </video>
-            <button id="skip-intro-btn">ACCÉDER AU DIRECT >></button>
+            <button id="skip-intro-btn">SKIP_BOOT_SEQUENCE >>></button>
         </div>`;
         
         document.body.insertAdjacentHTML('afterbegin', introHTML);
@@ -22,47 +20,28 @@ document.addEventListener("DOMContentLoaded", () => {
         const videoPlayer = document.getElementById('intro-video-player');
         const skipBtn = document.getElementById('skip-intro-btn');
 
-        // Fonction pour fermer l'intro et lancer le site
         const closeIntro = () => {
             videoLayer.classList.add('fade-out-intro');
-            sessionStorage.setItem('frostBroadcastSeen_v1', 'true');
-            
-            // On attend la fin de l'animation de fondu (0.8s)
+            sessionStorage.setItem('frostVideoIntroSeen_v2', 'true');
             setTimeout(() => {
-                // On réactive le scroll
-                document.body.style.overflow = 'auto';
-                // On supprime la vidéo du code
+                document.body.style.overflow = 'auto'; // Réactive le scroll
                 if(videoLayer) videoLayer.remove();
             }, 800);
         };
 
-        // Événements
         if(videoPlayer) {
-            // Quand la vidéo est finie, on ferme
             videoPlayer.addEventListener('ended', closeIntro);
-            
-            // Sécurité : si la vidéo plante, on ouvre quand même le site
-            videoPlayer.addEventListener('error', () => {
-                console.log("Erreur vidéo - Intro passée");
-                closeIntro();
-            });
+            videoPlayer.addEventListener('error', closeIntro);
         }
-        
-        // Bouton passer
-        if(skipBtn) {
-            skipBtn.addEventListener('click', closeIntro);
-        }
+        if(skipBtn) skipBtn.addEventListener('click', closeIntro);
 
     } else {
-        // Si déjà vu, on ne fait rien, le site est déjà là.
-        console.log("Intro déjà vue (Session active)");
+        console.log("Intro skipped");
     }
 
-    // --- 1. NAVBAR (Barre de navigation) ---
-    // Génération de fausses stats pour l'ambiance
+    // --- 1. NAVBAR ---
     const netSpeed = Math.floor(Math.random() * (900 - 400) + 400);
-    const securityLvl = ["STABLE", "ALERTE", "CRITIQUE"][Math.floor(Math.random() * 3)];
-    let secColor = securityLvl === "STABLE" ? "#0f0" : (securityLvl === "ALERTE" ? "orange" : "red");
+    const securityLvl = ["LOW", "MED", "HIGH", "MAX"][Math.floor(Math.random() * 4)];
 
     const headerHTML = `
     <nav class="navbar">
@@ -73,22 +52,22 @@ document.addEventListener("DOMContentLoaded", () => {
             </a>
             
             <div class="hud-stats">
-                <div class="hud-item"><i class="fa-solid fa-signal"></i> ${netSpeed} MB/s</div>
-                <div class="hud-item" style="color:${secColor}"><i class="fa-solid fa-shield-halved"></i> ETAT: ${securityLvl}</div>
-                <div class="hud-item"><i class="fa-solid fa-location-dot"></i> LS NET</div>
+                <div class="hud-item"><i class="fa-solid fa-wifi"></i> ${netSpeed} TB/s</div>
+                <div class="hud-item"><i class="fa-solid fa-shield-halved"></i> SEC: ${securityLvl}</div>
+                <div class="hud-item"><i class="fa-solid fa-location-dot"></i> LOS SANTOS</div>
             </div>
 
             <ul class="nav-links">
-                <li><a href="index.html">Flux Info</a></li>
+                <li><a href="index.html">Flux</a></li>
                 <li><a href="enquetes.html">Dossiers</a></li>
-                <li><a href="apropos.html">À Propos</a></li>
+                <li><a href="apropos.html">Manifeste</a></li>
                 <li><a href="contact.html">Contact</a></li>
             </ul>
             <a href="contact.html" class="btn-cta"><i class="fa-solid fa-paper-plane"></i> ENVOYER INFO</a>
         </div>
     </nav>
     <div class="ticker-wrap">
-        <div class="ticker-label">EN DIRECT</div>
+        <div class="ticker-label">LIVE FEED</div>
         <div class="ticker-text">
             /// ALERT: COUVRE-FEU EN VIGUEUR DANS LE SECTEUR 4 /// LSPD: RECRUTEMENT DE DRONES AUTOMATISÉS /// TECH: LE PRIX DES IMPLANTS NEURAUX CHUTE DE 15% /// MÉTÉO: PLUIES ACIDES PRÉVUES DEMAIN ///
         </div>
@@ -111,11 +90,10 @@ document.addEventListener("DOMContentLoaded", () => {
     </div>
     `;
 
-    // Insertion si pas déjà présents
     if(!document.querySelector('.navbar')) document.body.insertAdjacentHTML('afterbegin', headerHTML);
     if(!document.querySelector('footer')) document.body.insertAdjacentHTML('beforeend', `<footer>${footerHTML}</footer>`);
 
-    // --- 3. MENU ACTIF ---
+    // --- 3. ACTIVE STATE ---
     let currentPage = window.location.pathname.split("/").pop() || "index.html";
     document.querySelectorAll('.nav-links a').forEach(link => {
         if(link.getAttribute('href') === currentPage) link.classList.add('active');
