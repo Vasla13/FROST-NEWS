@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const hasSeenIntro = sessionStorage.getItem('frostVideoIntroSeen_v2');
 
     if(!hasSeenIntro) {
-        document.body.style.overflow = 'hidden'; // Bloque le scroll
+        document.body.style.overflow = 'hidden';
 
         const introHTML = `
         <div id="video-intro-layer">
@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
             videoLayer.classList.add('fade-out-intro');
             sessionStorage.setItem('frostVideoIntroSeen_v2', 'true');
             setTimeout(() => {
-                document.body.style.overflow = 'auto'; // Réactive le scroll
+                document.body.style.overflow = 'auto';
                 if(videoLayer) videoLayer.remove();
             }, 800);
         };
@@ -41,6 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- 1. NAVBAR ---
     const netSpeed = Math.floor(Math.random() * (900 - 400) + 400);
+    // Exemple de stat visuelle
     const securityLvl = ["LOW", "MED", "HIGH", "MAX"][Math.floor(Math.random() * 4)];
 
     const headerHTML = `
@@ -74,18 +75,16 @@ document.addEventListener("DOMContentLoaded", () => {
     </div>
     `;
     
-    // --- 2. FOOTER ---
+    // --- 2. FOOTER (Épuré) ---
     const footerHTML = `
     <div class="container">
-        <h2 style="margin-bottom: 20px; font-size: 2rem;">FROST NEWS NETWORK</h2>
-        <div style="display:flex; justify-content:center; gap:20px; margin-bottom:30px;">
-            <i class="fa-brands fa-twitter" style="font-size:1.5rem; color:white; opacity:0.5;"></i>
-            <i class="fa-brands fa-discord" style="font-size:1.5rem; color:white; opacity:0.5;"></i>
-            <i class="fa-solid fa-tower-broadcast" style="font-size:1.5rem; color:white; opacity:0.5;"></i>
-        </div>
-        <p style="color: var(--text-muted); font-size: 0.8rem; font-family: monospace;">
-            ID DE SESSION: ${Math.random().toString(36).substr(2, 9).toUpperCase()} <br>
-            CONTENU VÉRIFIÉ PAR IA-SENTINEL v4.2
+        <h2 style="margin-bottom: 10px; font-size: 1.8rem; letter-spacing:1px;">FROST NEWS NETWORK</h2>
+        
+        <div style="width: 50px; height: 2px; background: var(--primary); margin: 0 auto 20px auto;"></div>
+
+        <p style="color: var(--text-muted); font-size: 0.75rem; font-family: monospace; opacity: 0.7;">
+            SESSION ID: ${Math.random().toString(36).substr(2, 9).toUpperCase()} <br>
+            CONTENU VÉRIFIÉ PAR IA BNI
         </p>
     </div>
     `;
