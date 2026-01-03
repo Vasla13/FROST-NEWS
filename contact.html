@@ -8,33 +8,77 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <main class="container" style="display: flex; align-items: center; justify-content: center; min-height: 80vh; position: relative; width:100%; max-width: 100%;">
-        
-        <div style="position: absolute; inset: 0; z-index: -1;">
-            <img src="assets/city.png" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.3; filter: blur(8px); transform: scale(1.1);">
+    <main class="container">
+        <div style="position: fixed; inset: 0; z-index: -1;">
+            <img src="assets/city.png" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.15; filter: grayscale(100%) blur(3px);">
+        </div>
+
+        <div class="page-header" style="margin-bottom: 40px; border-bottom: 1px solid var(--border); padding-bottom: 20px;">
+            <h1 class="glitch" data-text="CONTACT" style="font-size: 3rem;">CANAUX DE COMMUNICATION</h1>
+            <p style="color: var(--text-muted);">Joindre la rédaction ou transmettre une information sensible.</p>
         </div>
         
-        <div class="contact-box" style="width: 100%; max-width: 550px; box-shadow: 0 0 60px rgba(0,0,0,0.6);">
-            <h2 style="text-align: center; margin-bottom: 10px; font-size:2rem;">SECURE CHANNEL</h2>
-            <p style="text-align: center; color: var(--text-muted); margin-bottom: 35px; font-size:0.9rem;">
-                Canal chiffré de bout en bout. Anonymat garanti par Frost News.
-            </p>
+        <div class="grid-2">
             
-            <form onsubmit="event.preventDefault(); alert('Message crypté et envoyé.');">
-                <div class="form-group">
-                    <label style="font-size:0.8rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; display:block; color:var(--primary);">Identité (RP)</label>
-                    <input type="text" class="form-input" placeholder="ex: John Doe / Anonyme">
-                </div>
-                <div class="form-group">
-                    <label style="font-size:0.8rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; display:block; color:var(--primary);">Objet</label>
-                    <input type="text" class="form-input" placeholder="ex: Scoop, Fuite de données...">
-                </div>
-                <div class="form-group">
-                    <label style="font-size:0.8rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; display:block; color:var(--primary);">Information</label>
-                    <textarea class="form-input" rows="5" placeholder="Détaillez votre information..."></textarea>
-                </div>
-                <button type="submit" class="btn-cta" style="width: 100%; margin-top:10px;">TRANSMETTRE</button>
-            </form>
+            <div>
+                <h3 style="color:var(--primary); margin-bottom: 20px; font-size: 1.2rem;">Coordonnées Officielles</h3>
+                
+                <a href="#" class="contact-row">
+                    <div style="background: rgba(0,242,255,0.1); width:50px; height:50px; display:flex; align-items:center; justify-content:center; border-radius: 50%; margin-right: 20px; border: 1px solid rgba(0,242,255,0.3);">
+                        <i class="fa-solid fa-phone-flip" style="font-size: 1.2rem; color: var(--primary);"></i>
+                    </div>
+                    <div>
+                        <h4 style="margin-bottom: 4px; font-size: 0.8rem; color:var(--text-muted);">LIGNE DIRECTE</h4>
+                        <div style="font-size: 1.4rem; font-family: monospace; color: white; letter-spacing: 2px;">555-86999</div>
+                    </div>
+                </a>
+
+                <a href="#" class="contact-row">
+                    <div style="width: 50px; height: 50px; margin-right: 20px; border-radius: 50%; overflow: hidden; border: 1px solid rgba(255,0,0,0.5);">
+                        <img src="assets/lifeinvader.png" alt="LI" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                    <div>
+                        <h4 style="margin-bottom: 4px; font-size: 0.8rem; color:var(--text-muted);">LIFEINVADER</h4>
+                        <div style="font-size: 1.2rem; color: white;">Dutch Coleman</div>
+                    </div>
+                </a>
+
+                <a href="#" class="contact-row">
+                    <div style="background: rgba(88, 101, 242, 0.2); width:50px; height:50px; display:flex; align-items:center; justify-content:center; border-radius: 50%; margin-right: 20px; border: 1px solid rgba(88, 101, 242, 0.5);">
+                        <i class="fa-brands fa-discord" style="font-size: 1.4rem; color: #5865F2;"></i>
+                    </div>
+                    <div>
+                        <h4 style="margin-bottom: 4px; font-size: 0.8rem; color:var(--text-muted);">INTRANET</h4>
+                        <div style="font-size: 1.2rem; color: white;">@Vasla</div>
+                    </div>
+                </a>
+
+            </div>
+
+            <div class="contact-box" style="width: 100%; margin:0;">
+                <h2 style="text-align: left; margin-bottom: 10px; font-size:1.5rem; display:flex; align-items:center; gap:10px;">
+                    <i class="fa-solid fa-user-secret" style="color:var(--primary);"></i> SOURCE ANONYME
+                </h2>
+                <p style="text-align: left; color: var(--text-muted); margin-bottom: 30px; font-size:0.9rem;">
+                    Canal chiffré de bout en bout. Votre identité est protégée par nos serveurs.
+                </p>
+                
+                <form onsubmit="event.preventDefault(); alert('Message crypté et envoyé au serveur.');">
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label style="font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; display:block; color:var(--primary);">Identité (Facultatif)</label>
+                        <input type="text" class="form-input" placeholder="ex: John Doe">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label style="font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; display:block; color:var(--primary);">Sujet</label>
+                        <input type="text" class="form-input" placeholder="ex: Scoop, Corruption...">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label style="font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; display:block; color:var(--primary);">Information / Preuves</label>
+                        <textarea class="form-input" rows="5" placeholder="Détaillez votre information..."></textarea>
+                    </div>
+                    <button type="submit" class="btn-cta" style="width: 100%;">TRANSMETTRE (CRYPTÉ)</button>
+                </form>
+            </div>
         </div>
     </main>
     <script src="js/components.js"></script>

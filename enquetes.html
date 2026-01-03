@@ -9,28 +9,54 @@
 </head>
 <body>
     <main class="container">
-        <div class="page-header">
-            <h1>Dossiers d'Investigation</h1>
-            <p>Accès restreint. Les journalistes de Frost News travaillent sur le long terme pour révéler la vérité.</p>
+        <div class="page-header" style="padding: 40px 0; border-bottom: 1px solid var(--border); margin-bottom: 40px;">
+            <h1 class="glitch" data-text="DOSSIERS NOIRS" style="font-size: 3rem; margin-bottom: 10px;">DOSSIERS D'INVESTIGATION</h1>
+            <p style="color: var(--text-muted); max-width: 600px;">
+                Accès restreint. Les journalistes de Frost News travaillent dans l'ombre pour révéler ce que les corpos veulent cacher.
+            </p>
         </div>
 
         <div class="grid-3">
             <div class="card" style="border-color: rgba(255, 165, 0, 0.4);">
+                <div class="card-img">
+                    <img src="assets/bureau.png" alt="Investigation Room">
+                    <div style="position:absolute; inset:0; background:rgba(255,165,0,0.1);"></div>
+                </div>
                 <div class="card-content">
                     <span class="badge ongoing">En Cours</span>
-                    <h3>Corruption au Port de Los Santos</h3>
-                    <p>Des mouvements de fonds suspects détectés dans les registres maritimes.</p>
-                    <div style="margin-top: 20px; padding: 15px; background:rgba(255, 165, 0, 0.05); border-radius:4px; font-size:0.85rem; color:orange;">
-                        <i class="fa-solid fa-lock"></i> ACCÈS RÉDACTION UNIQUEMENT
+                    <h3>Le Réseau "Ghost Signal"</h3>
+                    <p>Analyse des données chiffrées récupérées sur les serveurs clandestins de Mirror Park.</p>
+                    <div style="margin-top: auto; padding: 15px; background:rgba(255, 165, 0, 0.05); border: 1px dashed rgba(255,165,0,0.3); border-radius:4px; font-size:0.75rem; color:orange; display:flex; align-items:center; gap:10px;">
+                        <i class="fa-solid fa-lock"></i> 
+                        <span>NIVEAU D'ACCRÉDITATION INSUFFISANT</span>
                     </div>
                 </div>
             </div>
+
             <div class="card">
+                <div class="card-img">
+                    <img src="assets/city2.png" alt="Cityscape">
+                </div>
                 <div class="card-content">
                     <span class="badge done">Publié</span>
-                    <h3>La crise des opiacés</h3>
-                    <p>Comment les nouvelles drogues de synthèse inondent les quartiers sud.</p>
+                    <h3>Corruption au Port de LS</h3>
+                    <p>Comment les conteneurs de la Merryweather transitent sans contrôle douanier.</p>
                     <button class="btn-cta" style="width: 100%; margin-top: 20px;">ACCÉDER AU DOSSIER</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-img">
+                    <img src="assets/law.png" alt="Courthouse">
+                </div>
+                <div class="card-content">
+                    <span class="badge news">Archive 2034</span>
+                    <h3>L'Affaire du Gouverneur</h3>
+                    <p>Retour sur le scandale qui a fait chuter l'administration précédente.</p>
+                    <div class="card-footer">
+                        <span><i class="fa-solid fa-file-pdf"></i> PDF DISPONIBLE</span>
+                        <span>14 MB</span>
+                    </div>
                 </div>
             </div>
         </div>

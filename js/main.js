@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
     const path = window.location.pathname;
 
-    // --- BARRE DE PROGRESSION (Pour la page article) ---
+    // --- BARRE DE PROGRESSION ---
     const readingBar = document.getElementById('reading-progress');
     if (readingBar) {
         window.addEventListener('scroll', () => {
@@ -18,21 +18,28 @@ document.addEventListener("DOMContentLoaded", () => {
     if (newsGrid && (path.includes('index.html') || path === '/' || path.endsWith('/'))) {
         newsGrid.innerHTML = '';
         articleData.forEach(article => {
+            // Détermine la classe du badge
+            let badgeClass = "news";
+            if(article.category === "Alerte") badgeClass = "alert";
+            
             const cardHTML = `
             <article class="card" onclick="window.location.href='article.html?id=${article.id}'">
                 <div class="card-img">
-                    <img src="${article.image}" onerror="this.src='https://placehold.co/600x400/102030/00f2ff?text=FROST+NEWS'" alt="${article.title}">
+                    <img src="${article.image}" onerror="this.src='https://placehold.co/600x400/102030/00f2ff?text=NO+SIGNAL'" alt="${article.title}">
+                    <div style="position:absolute; top:10px; right:10px; background:black; color:white; font-size:0.7rem; padding:2px 6px; font-family:monospace;">
+                        ID: ${article.id.toString().padStart(3, '0')}
+                    </div>
                 </div>
                 <div class="card-content">
-                    <div style="display:flex; justify-content:space-between;">
-                        <span class="badge news">${article.category}</span>
-                        <span style="font-size:0.75rem; color:var(--text-muted);"><i class="fa-regular fa-clock"></i> ${article.readTime || '3 min'}</span>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span class="badge ${badgeClass}">${article.category}</span>
+                        <span style="font-size:0.7rem; color:var(--text-muted); font-family:monospace;">${article.readTime || '3 MIN'} READ</span>
                     </div>
                     <h3>${article.title}</h3>
                     <p>${article.summary}</p>
                     <div class="card-footer">
                         <span>${article.date.split('•')[0]}</span>
-                        <span style="color:var(--primary); font-weight:600; font-size:0.75rem;">LIRE LE DOSSIER <i class="fa-solid fa-chevron-right" style="font-size:0.6rem;"></i></span>
+                        <span style="color:var(--primary); font-weight:700;">ACCÉDER ></span>
                     </div>
                 </div>
             </article>
@@ -50,17 +57,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (article) {
             document.getElementById('art-category').textContent = article.category;
-            document.getElementById('art-title').textContent = article.title;
-            document.getElementById('art-author').innerHTML = `<i class="fa-solid fa-user-astronaut"></i> ${article.author}`;
-            document.getElementById('art-date').innerHTML = `<i class="fa-regular fa-calendar-check"></i> ${article.date}`;
+            
+            const titleEl = document.getElementById('art-title');
+            titleEl.textContent = article.title;
+            titleEl.setAttribute('data-text', article.title); // Pour l'effet glitch
+            
+            document.getElementById('art-author').innerHTML = `AGENT: ${article.author.toUpperCase()}`;
+            document.getElementById('art-date').innerHTML = `${article.date}`;
             document.getElementById('art-content').innerHTML = article.content;
             
             const imgEl = document.getElementById('art-image');
             imgEl.src = article.image;
-            imgEl.onerror = function() { this.src = 'https://placehold.co/1200x600/102030/00f2ff?text=FROST+NEWS'; };
+            imgEl.onerror = function() { this.src = 'https://placehold.co/1200x600/102030/00f2ff?text=DATA+CORRUPTED'; };
             document.title = `FROST NEWS | ${article.title}`;
         } else {
-            articleView.innerHTML = `<h2 style="text-align:center; padding:100px;">ERREUR 404 : Données corrompues.</h2>`;
+            articleView.innerHTML = `
+            <div style="text-align:center; padding:100px; border:1px solid red; background:rgba(255,0,0,0.1);">
+                <h1 style="color:red; font-family:monospace;">ERREUR CRITIQUE 404</h1>
+                <p>DONNÉES INTROUVABLES SUR LE SERVEUR.</p>
+                <a href="index.html" class="btn-cta" style="margin-top:20px; display:inline-block;">RETOUR</a>
+            </div>`;
         }
     }
 });
