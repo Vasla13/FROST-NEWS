@@ -71,22 +71,6 @@ h1, h2, h3, h4 { font-family: var(--font-heading); color: white; letter-spacing:
     animation: glitch-anim2 5s infinite linear alternate-reverse;
 }
 
-/* --- LOADER --- */
-#loader {
-    position: fixed; inset: 0; background: #000; z-index: 10000;
-    display: flex; flex-direction: column; justify-content: center; align-items: center;
-    font-family: monospace;
-}
-.loader-content { text-align: center; color: var(--primary); }
-.bar-container {
-    width: 300px; height: 2px; background: rgba(255,255,255,0.1); margin: 20px auto; position: relative;
-}
-.bar-progress {
-    height: 100%; background: var(--primary); width: 0%; box-shadow: 0 0 10px var(--primary);
-    animation: loadBar 1.5s ease-in-out forwards;
-}
-.terminal-text { font-size: 0.8rem; opacity: 0.7; margin-top: 10px; }
-
 /* --- NAVBAR --- */
 .navbar {
     height: var(--nav-height);
@@ -183,7 +167,6 @@ h1, h2, h3, h4 { font-family: var(--font-heading); color: white; letter-spacing:
     20% { clip: rect(90px, 9999px, 10px, 0); transform: translate(2px); }
     100% { clip: rect(0, 9999px, 0, 0); transform: translate(0); }
 }
-@keyframes loadBar { 0% { width: 0%; } 100% { width: 100%; } }
 @keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
@@ -219,4 +202,37 @@ footer { background: #010204; border-top: 1px solid var(--border); padding: 50px
     .nav-links, .hud-stats { display: none; }
     h1 { font-size: 3rem !important; }
     .grid-2 { grid-template-columns: 1fr; gap: 40px; }
+}
+
+/* --- VIDEO INTRO SYSTEM (Ajouté) --- */
+#video-intro-layer {
+    position: fixed; inset: 0; z-index: 99999;
+    background: #000;
+    display: flex; align-items: center; justify-content: center;
+}
+
+#intro-video-player {
+    width: 100%; height: 100%;
+    object-fit: cover; /* Remplit tout l'écran */
+}
+
+#skip-intro-btn {
+    position: absolute; bottom: 30px; right: 30px; z-index: 100000;
+    background: transparent; border: 1px solid rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.6); padding: 8px 20px;
+    font-family: monospace; font-size: 0.8rem; cursor: pointer;
+    transition: 0.3s;
+}
+#skip-intro-btn:hover {
+    border-color: var(--primary); color: var(--primary); background: rgba(0, 242, 255, 0.1);
+}
+
+.fade-out-intro {
+    animation: fadeOutVideo 0.8s ease-out forwards;
+    pointer-events: none;
+}
+
+@keyframes fadeOutVideo {
+    0% { opacity: 1; transform: scale(1); filter: brightness(1); }
+    100% { opacity: 0; transform: scale(1.05); filter: brightness(2); }
 }

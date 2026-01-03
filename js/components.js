@@ -1,44 +1,68 @@
 document.addEventListener("DOMContentLoaded", () => {
     
-    // 0. LOADER SYSTEM 2035
-    if(!document.getElementById('loader')) {
-        const loaderHTML = `
-        <div id="loader">
-            <div class="loader-content">
-                <div style="font-size: 2rem; font-weight: 800; letter-spacing: 5px; margin-bottom: 20px;">FROST<span style="color:white">NEWS</span></div>
-                <div class="bar-container"><div class="bar-progress"></div></div>
-                <div class="terminal-text" id="loader-log">INITIALIZING NEURAL LINK...</div>
-            </div>
+    // --- 0. SYSTÈME INTRO VIDÉO (Une seule fois par session) ---
+    const hasSeenIntro = sessionStorage.getItem('frostBroadcastSeen_v1');
+
+    if(!hasSeenIntro) {
+        // 1. On bloque le scroll (cache la barre à droite) pour l'immersion
+        document.body.style.overflow = 'hidden';
+
+        // 2. Injection du lecteur vidéo plein écran
+        const introHTML = `
+        <div id="video-intro-layer">
+            <video id="intro-video-player" autoplay muted playsinline>
+                <source src="assets/intro.mp4" type="video/mp4">
+            </video>
+            <button id="skip-intro-btn">ACCÉDER AU DIRECT >></button>
         </div>`;
-        document.body.insertAdjacentHTML('afterbegin', loaderHTML);
         
-        const logs = [
-            "DECRYPTING SECURE CHANNEL...",
-            "VERIFYING BIOMETRICS...",
-            "ESTABLISHING UPLINK TO SATELLITE 4...",
-            "ACCESS GRANTED."
-        ];
+        document.body.insertAdjacentHTML('afterbegin', introHTML);
         
-        const logEl = document.getElementById('loader-log');
-        let step = 0;
+        const videoLayer = document.getElementById('video-intro-layer');
+        const videoPlayer = document.getElementById('intro-video-player');
+        const skipBtn = document.getElementById('skip-intro-btn');
+
+        // Fonction pour fermer l'intro et lancer le site
+        const closeIntro = () => {
+            videoLayer.classList.add('fade-out-intro');
+            sessionStorage.setItem('frostBroadcastSeen_v1', 'true');
+            
+            // On attend la fin de l'animation de fondu (0.8s)
+            setTimeout(() => {
+                // On réactive le scroll
+                document.body.style.overflow = 'auto';
+                // On supprime la vidéo du code
+                if(videoLayer) videoLayer.remove();
+            }, 800);
+        };
+
+        // Événements
+        if(videoPlayer) {
+            // Quand la vidéo est finie, on ferme
+            videoPlayer.addEventListener('ended', closeIntro);
+            
+            // Sécurité : si la vidéo plante, on ouvre quand même le site
+            videoPlayer.addEventListener('error', () => {
+                console.log("Erreur vidéo - Intro passée");
+                closeIntro();
+            });
+        }
         
-        const interval = setInterval(() => {
-            if(step < logs.length) {
-                logEl.innerText = logs[step];
-                logEl.style.opacity = Math.random() > 0.5 ? 1 : 0.5;
-                step++;
-            } else {
-                clearInterval(interval);
-                const loader = document.getElementById('loader');
-                loader.style.opacity = '0';
-                setTimeout(() => { loader.style.display = 'none'; }, 500);
-            }
-        }, 300);
+        // Bouton passer
+        if(skipBtn) {
+            skipBtn.addEventListener('click', closeIntro);
+        }
+
+    } else {
+        // Si déjà vu, on ne fait rien, le site est déjà là.
+        console.log("Intro déjà vue (Session active)");
     }
 
-    // 1. NAVBAR FUTURE-READY
+    // --- 1. NAVBAR (Barre de navigation) ---
+    // Génération de fausses stats pour l'ambiance
     const netSpeed = Math.floor(Math.random() * (900 - 400) + 400);
-    const securityLvl = ["LOW", "MED", "HIGH", "MAX"][Math.floor(Math.random() * 4)];
+    const securityLvl = ["STABLE", "ALERTE", "CRITIQUE"][Math.floor(Math.random() * 3)];
+    let secColor = securityLvl === "STABLE" ? "#0f0" : (securityLvl === "ALERTE" ? "orange" : "red");
 
     const headerHTML = `
     <nav class="navbar">
@@ -49,29 +73,29 @@ document.addEventListener("DOMContentLoaded", () => {
             </a>
             
             <div class="hud-stats">
-                <div class="hud-item"><i class="fa-solid fa-wifi"></i> ${netSpeed} TB/s</div>
-                <div class="hud-item"><i class="fa-solid fa-shield-halved"></i> SEC: ${securityLvl}</div>
-                <div class="hud-item"><i class="fa-solid fa-location-dot"></i> LOS SANTOS</div>
+                <div class="hud-item"><i class="fa-solid fa-signal"></i> ${netSpeed} MB/s</div>
+                <div class="hud-item" style="color:${secColor}"><i class="fa-solid fa-shield-halved"></i> ETAT: ${securityLvl}</div>
+                <div class="hud-item"><i class="fa-solid fa-location-dot"></i> LS NET</div>
             </div>
 
             <ul class="nav-links">
-                <li><a href="index.html">Flux</a></li>
+                <li><a href="index.html">Flux Info</a></li>
                 <li><a href="enquetes.html">Dossiers</a></li>
-                <li><a href="apropos.html">Manifeste</a></li>
+                <li><a href="apropos.html">À Propos</a></li>
                 <li><a href="contact.html">Contact</a></li>
             </ul>
             <a href="contact.html" class="btn-cta"><i class="fa-solid fa-paper-plane"></i> ENVOYER INFO</a>
         </div>
     </nav>
     <div class="ticker-wrap">
-        <div class="ticker-label">LIVE FEED</div>
+        <div class="ticker-label">EN DIRECT</div>
         <div class="ticker-text">
             /// ALERT: COUVRE-FEU EN VIGUEUR DANS LE SECTEUR 4 /// LSPD: RECRUTEMENT DE DRONES AUTOMATISÉS /// TECH: LE PRIX DES IMPLANTS NEURAUX CHUTE DE 15% /// MÉTÉO: PLUIES ACIDES PRÉVUES DEMAIN ///
         </div>
     </div>
     `;
     
-    // 2. FOOTER
+    // --- 2. FOOTER ---
     const footerHTML = `
     <div class="container">
         <h2 style="margin-bottom: 20px; font-size: 2rem;">FROST NEWS NETWORK</h2>
@@ -87,10 +111,11 @@ document.addEventListener("DOMContentLoaded", () => {
     </div>
     `;
 
+    // Insertion si pas déjà présents
     if(!document.querySelector('.navbar')) document.body.insertAdjacentHTML('afterbegin', headerHTML);
     if(!document.querySelector('footer')) document.body.insertAdjacentHTML('beforeend', `<footer>${footerHTML}</footer>`);
 
-    // 3. ACTIVE STATE
+    // --- 3. MENU ACTIF ---
     let currentPage = window.location.pathname.split("/").pop() || "index.html";
     document.querySelectorAll('.nav-links a').forEach(link => {
         if(link.getAttribute('href') === currentPage) link.classList.add('active');
