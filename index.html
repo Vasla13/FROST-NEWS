@@ -20,9 +20,13 @@
 <body class="editing-enabled">
   <header class="control-bar">
     <div class="control-main">
-      <div class="brand-control">
+      <div class="brand-control control-group">
+        <div class="brand-topline">
+          <span class="studio-badge">Studio de redaction</span>
+          <span class="studio-meta">Los Santos | 2035</span>
+        </div>
         <h1>Frost News Studio</h1>
-        <p>Mode edition - Los Santos 2035</p>
+        <p>Mise en page, contenu et export synchronises.</p>
       </div>
 
       <div class="control-group compact">
@@ -64,22 +68,24 @@
       </div>
     </div>
 
-    <details class="history-panel">
-      <summary>Historique et sauvegardes</summary>
-      <div class="control-group history-group">
-        <p class="helper-text">Mode Texte ON: edition du contenu. Utilisez "Ajouter/Supprimer bloc texte" pour gerer le contenu dans chaque case.</p>
-        <input id="edition-label" type="text" placeholder="Nom de cette edition (optionnel)">
-        <div class="button-row">
-          <button id="archive-edition" type="button">Archiver edition</button>
-          <button id="load-history" type="button">Charger</button>
-          <button id="delete-history" type="button">Supprimer</button>
-          <button id="clear-history" type="button">Vider</button>
+    <div class="control-bottom">
+      <details class="history-panel">
+        <summary>Historique et sauvegardes</summary>
+        <div class="control-group history-group">
+          <p class="helper-text">Mode Texte ON: edition du contenu. Utilisez "Ajouter/Supprimer bloc texte" pour gerer le contenu dans chaque case.</p>
+          <input id="edition-label" type="text" placeholder="Nom de cette edition (optionnel)">
+          <div class="button-row">
+            <button id="archive-edition" type="button">Archiver edition</button>
+            <button id="load-history" type="button">Charger</button>
+            <button id="delete-history" type="button">Supprimer</button>
+            <button id="clear-history" type="button">Vider</button>
+          </div>
+          <select id="history-list" size="4" aria-label="Historique des editions"></select>
+          <p id="autosave-info">Auto-save: jamais.</p>
         </div>
-        <select id="history-list" size="4" aria-label="Historique des editions"></select>
-        <p id="autosave-info">Auto-save: jamais.</p>
-      </div>
-    </details>
-    <p id="status-text" aria-live="polite">Pret.</p>
+      </details>
+      <p id="status-text" aria-live="polite">Pret.</p>
+    </div>
     <input id="image-upload-input" type="file" accept="image/*" hidden>
   </header>
 

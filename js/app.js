@@ -55,7 +55,9 @@
     JOURNAL_YEAR,
     MAX_EXPORT_BYTES,
     MIN_HEIGHT,
-    MIN_WIDTH
+    MIN_WIDTH,
+    TEXT_BLOCK_MIN_HEIGHT_PX,
+    TEXT_BLOCK_MIN_WIDTH_PX
   } = constants;
 
   const {
@@ -101,6 +103,7 @@
     for (const moduleElement of modules) {
       ensureResizeHandles(moduleElement);
     }
+    refreshTextResizeHandles(page);
   }
 
   function ensureResizeHandles(moduleElement) {
@@ -129,6 +132,81 @@
       handle.dataset.resizeDir = dir;
       handle.title = "Redimensionner";
       layer.appendChild(handle);
+    }
+  }
+
+  function ensureTextResizeHandle(textBlock) {
+    if (!textBlock || !textBlock.classList) {
+      return;
+    }
+    textBlock.classList.add("text-resizable");
+
+    let layer = null;
+    for (const child of Array.from(textBlock.children || [])) {
+      if (child.classList && child.classList.contains("text-resize-layer")) {
+        layer = child;
+        break;
+      }
+    }
+    if (!layer) {
+      layer = document.createElement("span");
+      layer.className = "text-resize-layer";
+      layer.setAttribute("aria-hidden", "true");
+      textBlock.appendChild(layer);
+    }
+    layer.setAttribute("contenteditable", "false");
+    layer.setAttribute("draggable", "false");
+
+    if (!layer.querySelector(".text-move-handle")) {
+      const moveHandle = document.createElement("span");
+      moveHandle.className = "text-move-handle";
+      moveHandle.title = "Deplacer le bloc texte";
+      moveHandle.setAttribute("aria-hidden", "true");
+      moveHandle.setAttribute("contenteditable", "false");
+      moveHandle.setAttribute("draggable", "false");
+      layer.appendChild(moveHandle);
+    }
+
+    for (const dir of frameResizeDirections) {
+      if (layer.querySelector(`[data-text-resize-dir="${dir}"]`)) {
+        continue;
+      }
+      const handle = document.createElement("span");
+      handle.className = `text-resize-handle text-resize-${dir}`;
+      handle.dataset.textResizeDir = dir;
+      handle.title = "Redimensionner le bloc texte";
+      handle.setAttribute("aria-hidden", "true");
+      handle.setAttribute("contenteditable", "false");
+      handle.setAttribute("draggable", "false");
+      layer.appendChild(handle);
+    }
+  }
+
+  function readTextShift(textBlock) {
+    return {
+      x: parseFloat(textBlock.dataset.textShiftX || "0"),
+      y: parseFloat(textBlock.dataset.textShiftY || "0")
+    };
+  }
+
+  function applyTextShift(textBlock, shift) {
+    const safeX = Number.isFinite(Number(shift.x)) ? Number(shift.x) : 0;
+    const safeY = Number.isFinite(Number(shift.y)) ? Number(shift.y) : 0;
+    textBlock.dataset.textShiftX = String(safeX);
+    textBlock.dataset.textShiftY = String(safeY);
+    if (Math.abs(safeX) < 0.01 && Math.abs(safeY) < 0.01) {
+      textBlock.style.removeProperty("transform");
+      return;
+    }
+    textBlock.style.transform = `translate(${safeX.toFixed(1)}px, ${safeY.toFixed(1)}px)`;
+  }
+
+  function refreshTextResizeHandles(rootNode) {
+    const root = rootNode || page;
+    for (const textBlock of root.querySelectorAll(getTextBlockSelector())) {
+      ensureTextResizeHandle(textBlock);
+      const shift = readTextShift(textBlock);
+      applyTextShift(textBlock, shift);
     }
   }
 
@@ -370,6 +448,15 @@
     for (const node of clone.querySelectorAll(".text-block-active")) {
       node.classList.remove("text-block-active");
     }
+    for (const node of clone.querySelectorAll(".text-resize-handle")) {
+      node.remove();
+    }
+    for (const node of clone.querySelectorAll(".text-resize-layer")) {
+      node.remove();
+    }
+    for (const node of clone.querySelectorAll(".text-resizable")) {
+      node.classList.remove("text-resizable");
+    }
     for (const node of clone.querySelectorAll(".module")) {
       node.classList.remove("active");
     }
@@ -523,6 +610,24 @@
     moduleElement.style.height = `${safeRect.h}%`;
   }
 
+  function buildSanitizedModuleHtml(moduleElement) {
+    const contentNode = moduleElement.querySelector(".module-content");
+    if (!contentNode) {
+      return "";
+    }
+    const clonedContent = contentNode.cloneNode(true);
+    for (const node of clonedContent.querySelectorAll(".text-resize-handle")) {
+      node.remove();
+    }
+    for (const node of clonedContent.querySelectorAll(".text-resize-layer")) {
+      node.remove();
+    }
+    for (const node of clonedContent.querySelectorAll(".text-resizable")) {
+      node.classList.remove("text-resizable");
+    }
+    return clonedContent.innerHTML;
+  }
+
   function setActiveLayoutButton(layoutName) {
     for (const button of layoutButtons) {
       button.classList.toggle("is-active", button.dataset.layout === layoutName);
@@ -544,6 +649,7 @@
         node.classList.remove("editable-text");
       }
     }
+    refreshTextResizeHandles(page);
   }
 
   function applyLayout(layoutName, options) {
@@ -604,7 +710,7 @@
         isCustom: moduleElement.dataset.custom === "1",
         label: moduleElement.querySelector(".module-label")?.textContent || "Bloc",
         rect: readRect(moduleElement),
-        html: moduleElement.querySelector(".module-content").innerHTML,
+        html: buildSanitizedModuleHtml(moduleElement),
         contentClass: moduleElement.querySelector(".module-content").className
       }))
     };
@@ -663,6 +769,16 @@
           targetModule.dataset.custom = "1";
         } else {
           delete targetModule.dataset.custom;
+        }
+
+        for (const node of targetModule.querySelectorAll(".text-resize-handle")) {
+          node.remove();
+        }
+        for (const node of targetModule.querySelectorAll(".text-resize-layer")) {
+          node.remove();
+        }
+        for (const node of targetModule.querySelectorAll(".text-resizable")) {
+          node.classList.remove("text-resizable");
         }
       }
 
@@ -871,6 +987,77 @@
       return;
     }
 
+    const textMoveHandle = event.target.closest(".text-move-handle");
+    if (textMoveHandle) {
+      const textBlock = textMoveHandle.closest(getTextBlockSelector());
+      if (!textBlock || !textBlock.matches(getTextBlockSelector())) {
+        return;
+      }
+      event.preventDefault();
+      setActiveModule(moduleElement);
+      setActiveTextBlock(textBlock);
+
+      const content = textBlock.closest(".module-content");
+      if (!content) {
+        return;
+      }
+      const contentRect = content.getBoundingClientRect();
+      const textRect = textBlock.getBoundingClientRect();
+      const shift = readTextShift(textBlock);
+
+      state.dragState = {
+        module: moduleElement,
+        type: "text-block-move",
+        textBlock,
+        startX: event.clientX,
+        startY: event.clientY,
+        startShiftX: shift.x,
+        startShiftY: shift.y,
+        startLeftPx: textRect.left - contentRect.left,
+        startTopPx: textRect.top - contentRect.top,
+        textWidthPx: Math.max(1, textRect.width),
+        textHeightPx: Math.max(1, textRect.height),
+        containerWidthPx: Math.max(1, content.clientWidth),
+        containerHeightPx: Math.max(1, content.clientHeight),
+        dirty: false
+      };
+      return;
+    }
+
+    const textResizeHandle = event.target.closest(".text-resize-handle");
+    if (textResizeHandle) {
+      const textBlock = textResizeHandle.closest(getTextBlockSelector());
+      if (!textBlock || !textBlock.matches(getTextBlockSelector())) {
+        return;
+      }
+      event.preventDefault();
+      setActiveModule(moduleElement);
+      setActiveTextBlock(textBlock);
+
+      const content = textBlock.closest(".module-content");
+      const textRect = textBlock.getBoundingClientRect();
+      const computed = window.getComputedStyle(textBlock);
+      const minHeightPx = parseFloat(computed.minHeight);
+
+      state.dragState = {
+        module: moduleElement,
+        type: "text-block-resize",
+        textBlock,
+        textResizeDir: textResizeHandle.dataset.textResizeDir || "se",
+        startX: event.clientX,
+        startY: event.clientY,
+        startWidthPx: Math.max(TEXT_BLOCK_MIN_WIDTH_PX, textRect.width || TEXT_BLOCK_MIN_WIDTH_PX),
+        startHeightPx: Math.max(
+          TEXT_BLOCK_MIN_HEIGHT_PX,
+          Number.isFinite(minHeightPx) ? minHeightPx : 0,
+          textRect.height || TEXT_BLOCK_MIN_HEIGHT_PX
+        ),
+        containerWidthPx: Math.max(1, content ? content.clientWidth : moduleElement.clientWidth || 1),
+        dirty: false
+      };
+      return;
+    }
+
     const resizeHandle = event.target.closest(".resize-handle");
     const isResizeHandle = Boolean(resizeHandle);
     const isDragHandle = Boolean(event.target.closest(".module-tools"));
@@ -897,6 +1084,63 @@
 
   function onPointerMove(event) {
     if (!state.dragState) {
+      return;
+    }
+
+    if (state.dragState.type === "text-block-move") {
+      const deltaX = event.clientX - state.dragState.startX;
+      const deltaY = event.clientY - state.dragState.startY;
+
+      const tentativeLeft = state.dragState.startLeftPx + deltaX;
+      const tentativeTop = state.dragState.startTopPx + deltaY;
+
+      const maxLeft = Math.max(0, state.dragState.containerWidthPx - state.dragState.textWidthPx);
+      const maxTop = Math.max(0, state.dragState.containerHeightPx - state.dragState.textHeightPx);
+
+      const clampedLeft = clamp(tentativeLeft, 0, maxLeft);
+      const clampedTop = clamp(tentativeTop, 0, maxTop);
+
+      const effectiveDeltaX = clampedLeft - state.dragState.startLeftPx;
+      const effectiveDeltaY = clampedTop - state.dragState.startTopPx;
+
+      applyTextShift(state.dragState.textBlock, {
+        x: state.dragState.startShiftX + effectiveDeltaX,
+        y: state.dragState.startShiftY + effectiveDeltaY
+      });
+
+      state.dragState.dirty = true;
+      schedulePreviewSync();
+      return;
+    }
+
+    if (state.dragState.type === "text-block-resize") {
+      const deltaX = event.clientX - state.dragState.startX;
+      const deltaY = event.clientY - state.dragState.startY;
+      const dir = state.dragState.textResizeDir || "se";
+
+      let nextWidth = state.dragState.startWidthPx;
+      let nextHeight = state.dragState.startHeightPx;
+
+      if (dir.includes("e")) {
+        nextWidth = state.dragState.startWidthPx + deltaX;
+      } else if (dir.includes("w")) {
+        nextWidth = state.dragState.startWidthPx - deltaX;
+      }
+      if (dir.includes("s")) {
+        nextHeight = state.dragState.startHeightPx + deltaY;
+      } else if (dir.includes("n")) {
+        nextHeight = state.dragState.startHeightPx - deltaY;
+      }
+
+      const clampedWidth = clamp(nextWidth, TEXT_BLOCK_MIN_WIDTH_PX, state.dragState.containerWidthPx);
+      const clampedHeight = clamp(nextHeight, TEXT_BLOCK_MIN_HEIGHT_PX, 2200);
+
+      state.dragState.textBlock.style.maxWidth = "100%";
+      state.dragState.textBlock.style.width = `${clampedWidth.toFixed(1)}px`;
+      state.dragState.textBlock.style.minHeight = `${clampedHeight.toFixed(1)}px`;
+
+      state.dragState.dirty = true;
+      schedulePreviewSync();
       return;
     }
 
@@ -944,10 +1188,14 @@
     if (!state.dragState) {
       return;
     }
+    const actionType = state.dragState.type;
     const shouldAutosave = state.dragState.dirty;
     state.dragState = null;
     if (shouldAutosave) {
-      scheduleAutosave("mise en page modifiee");
+      const reason = actionType === "text-block-resize"
+        ? "taille bloc texte modifiee"
+        : (actionType === "text-block-move" ? "position bloc texte modifiee" : "mise en page modifiee");
+      scheduleAutosave(reason);
     }
   }
 
@@ -1305,7 +1553,10 @@
         setActiveModule(moduleElement);
       }
 
-      const textBlock = event.target.closest(getTextBlockSelector());
+      const textHandle = event.target.closest(".text-resize-handle");
+      const textBlock = textHandle
+        ? textHandle.closest(getTextBlockSelector())
+        : event.target.closest(getTextBlockSelector());
       if (textBlock && moduleElement && moduleElement.contains(textBlock)) {
         setActiveTextBlock(textBlock);
       } else if (!textBlock) {
