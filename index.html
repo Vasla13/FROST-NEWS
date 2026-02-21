@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Frost News - Los Santos 2035</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Libre+Baskerville:wght@400;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" defer></script>
+  <script src="js/constants.js" defer></script>
+  <script src="js/utils.js" defer></script>
+  <script src="js/storage.js" defer></script>
+  <script src="js/media-utils.js" defer></script>
+  <script src="js/dom.js" defer></script>
+  <script src="js/app.js" defer></script>
+</head>
+<body class="editing-enabled">
+  <header class="control-bar">
+    <div class="control-main">
+      <div class="brand-control">
+        <h1>Frost News Studio</h1>
+        <p>Mode edition - Los Santos 2035</p>
+      </div>
+
+      <div class="control-group compact">
+        <span class="control-label">Variantes</span>
+        <div class="button-row">
+          <button class="layout-btn is-active" data-layout="classic" type="button">Classique modernise</button>
+          <button class="layout-btn" data-layout="magazine" type="button">Ultra futuriste</button>
+          <button class="layout-btn" data-layout="minimal" type="button">Minimal premium</button>
+        </div>
+      </div>
+
+      <div class="control-group compact">
+        <span class="control-label">Texte</span>
+        <div class="button-row">
+          <button id="toggle-edit" type="button">Texte: ON</button>
+          <button id="reset-layout" type="button">Reinitialiser</button>
+          <button id="add-image" type="button">Ajouter image</button>
+          <button id="add-text-chunk" type="button">Ajouter bloc texte</button>
+          <button id="delete-text-chunk" type="button">Supprimer bloc texte</button>
+        </div>
+      </div>
+
+      <div class="control-group compact">
+        <span class="control-label">Cases</span>
+        <div class="button-row">
+          <button id="add-text-block" type="button">Ajouter case texte</button>
+          <button id="duplicate-block" type="button">Dupliquer case</button>
+          <button id="delete-block" type="button">Supprimer case</button>
+        </div>
+      </div>
+
+      <div class="control-group compact">
+        <span class="control-label">Export HQ (&lt; 2 Mo)</span>
+        <div class="button-row">
+          <button id="export-png" type="button">PNG</button>
+          <button id="export-jpeg" type="button">JPEG</button>
+          <button id="export-pdf" type="button">PDF</button>
+        </div>
+      </div>
+    </div>
+
+    <details class="history-panel">
+      <summary>Historique et sauvegardes</summary>
+      <div class="control-group history-group">
+        <p class="helper-text">Mode Texte ON: edition du contenu. Utilisez "Ajouter/Supprimer bloc texte" pour gerer le contenu dans chaque case.</p>
+        <input id="edition-label" type="text" placeholder="Nom de cette edition (optionnel)">
+        <div class="button-row">
+          <button id="archive-edition" type="button">Archiver edition</button>
+          <button id="load-history" type="button">Charger</button>
+          <button id="delete-history" type="button">Supprimer</button>
+          <button id="clear-history" type="button">Vider</button>
+        </div>
+        <select id="history-list" size="4" aria-label="Historique des editions"></select>
+        <p id="autosave-info">Auto-save: jamais.</p>
+      </div>
+    </details>
+    <p id="status-text" aria-live="polite">Pret.</p>
+    <input id="image-upload-input" type="file" accept="image/*" hidden>
+  </header>
+
+  <main class="workspace workspace-split">
+    <section class="workspace-pane">
+      <div class="workspace-pane-head">Edition</div>
+      <div class="workspace-canvas editor-canvas">
+        <div id="print-page" aria-label="Page journal Frost News Los Santos 2035">
+      <section class="module" data-block="masthead">
+        <div class="module-tools">
+          <span class="module-label">Titre principal</span>
+          <span class="resize-handle toolbar-resize-handle" data-resize-dir="se" title="Redimensionner"></span>
+        </div>
+        <div class="module-content masthead-content">
+          <p class="edition-line">EDITION LOS SANTOS - <span id="edition-date">--</span></p>
+          <h2>FROST NEWS</h2>
+          <p class="tagline">MEDIA METROPOLITAIN - LOS SANTOS 2035</p>
+        </div>
+      </section>
+
+      <section class="module" data-block="lead">
+        <div class="module-tools">
+          <span class="module-label">Breaking News</span>
+          <span class="resize-handle toolbar-resize-handle" data-resize-dir="se" title="Redimensionner"></span>
+        </div>
+        <div class="module-content lead-content">
+          <p class="kicker">BREAKING NEWS | LOS SANTOS 2035</p>
+          <h2>Los Santos active le protocole "Ville Synapse": trafic, securite et services relies en temps reel</h2>
+          <p class="standfirst">Carrefours intelligents, signaletique holographique et corridors prioritaires entrent en service cette nuit. La mairie promet une metropole plus lisible et plus sure, sans rupture entre quartiers centraux et residentiels.</p>
+          <p class="byline">Par Lina Morel, service Metropole</p>
+        </div>
+      </section>
+
+      <section class="module" data-block="article-main">
+        <div class="module-tools">
+          <span class="module-label">Article secondaire A</span>
+          <span class="resize-handle toolbar-resize-handle" data-resize-dir="se" title="Redimensionner"></span>
+        </div>
+        <div class="module-content article-content">
+          <h3>Mission Row: le pilotage nocturne passe du test au deploiement total</h3>
+          <p class="article-deck">Bus, livraisons et priorites de carrefours sont synchronises pour fluidifier la ville apres 21h.</p>
+          <p class="article-byline">Par Theo Marquez, grand reporter metropolitain</p>
+          <div class="article-columns">
+            <p>Dans les secteurs pilotes, les parcours ont ete redessines pour reduire les ruptures entre marche, transport collectif et livraisons. Les couloirs de service absorbent mieux les flux tardifs et les traverses pietonnes gagnent en priorite.</p>
+            <p>Les premiers retours habitants signalent une meilleure lisibilite du reseau nocturne. Les associations demandent un suivi strict sur le bruit et la place des commerces independants, avec publication d'indicateurs ouverts.</p>
+            <p>Le prochain palier vise Textile City, Rancho et les abords du port. Les hubs publieront les disponibilites en temps reel pour limiter les boucles inutiles et fluidifier les transitions entre bassins de vie.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="module" data-block="article-second">
+        <div class="module-tools">
+          <span class="module-label">Article secondaire B</span>
+          <span class="resize-handle toolbar-resize-handle" data-resize-dir="se" title="Redimensionner"></span>
+        </div>
+        <div class="module-content article-content">
+          <h3>Del Perro et Vespucci activent leurs facades intelligentes anti-surchauffe</h3>
+          <p class="article-deck">Ilots mixtes, ombrage actif et capteurs thermiques reduisent les pics de charge en soiree.</p>
+          <p class="article-byline">Par Jade Rivera, service Climat & Mobilite</p>
+          <div class="article-columns">
+            <p>Les batiments pilotes adaptent leurs protections de facade selon l'affluence et la temperature de rue. Les gestionnaires annoncent une charge de climatisation plus stable en soiree, avec une baisse des pics observes.</p>
+            <p>En mobilite de proximite, les navettes electriques Vespucci-Little Seoul-Downtown passent toutes les six minutes en pointe. Les correspondances sont recalees sur les hubs actifs pour limiter les temps morts.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="module" data-block="frontline">
+        <div class="module-tools">
+          <span class="module-label">Breve locale</span>
+          <span class="resize-handle toolbar-resize-handle" data-resize-dir="se" title="Redimensionner"></span>
+        </div>
+        <div class="module-content shortlist-content">
+          <h3>Breve locale de Los Santos</h3>
+          <ol>
+            <li><strong>03:20 - Downtown:</strong> ouverture du corridor pieton continu entre hubs et commerces.</li>
+            <li><strong>03:55 - Port de LS:</strong> cadence logistique reduite sur les axes residentiels.</li>
+            <li><strong>04:10 - Vinewood:</strong> recalibrage de l'eclairage nocturne sur les axes culturels.</li>
+            <li><strong>04:35 - Davis:</strong> extension des zones d'ombre sur trois arteres majeures.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="module" data-block="briefs">
+        <div class="module-tools">
+          <span class="module-label">Tech &amp; Securite</span>
+          <span class="resize-handle toolbar-resize-handle" data-resize-dir="se" title="Redimensionner"></span>
+        </div>
+        <div class="module-content briefs-content">
+          <h3>Tech &amp; Securite 2035</h3>
+          <div class="briefs-grid">
+            <article>
+              <p class="brief-tag">CYBERDEFENSE</p>
+              <p>Le noyau reseau municipal active une surveillance en couches avec reponse automatisee sous 2,4 secondes.</p>
+            </article>
+            <article>
+              <p class="brief-tag">VISION URBAINE</p>
+              <p>Les capteurs d'intersection detectent les points de friction trafic et ajustent les cycles en continu.</p>
+            </article>
+            <article>
+              <p class="brief-tag">SURETE</p>
+              <p>Les drones de securite de secteur basculent en patrouille cooperative sur les zones a forte densite nocturne.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="module" data-block="quote">
+        <div class="module-tools">
+          <span class="module-label">Analyse</span>
+          <span class="resize-handle toolbar-resize-handle" data-resize-dir="se" title="Redimensionner"></span>
+        </div>
+        <div class="module-content quote-content">
+          <blockquote>
+            "Un grand media urbain ne suit pas seulement l'actualite: il mesure la fiabilite des systemes qui font tourner la ville."
+          </blockquote>
+          <p>- Mila Ortega, cellule Strategie urbaine</p>
+        </div>
+      </section>
+
+      <section class="module" data-block="gallery">
+        <div class="module-tools">
+          <span class="module-label">Zone image</span>
+          <span class="resize-handle toolbar-resize-handle" data-resize-dir="se" title="Redimensionner"></span>
+        </div>
+        <div class="module-content gallery-content">
+          <h3>Zone image et legendes</h3>
+          <div class="gallery-grid">
+            <figure>
+              <img src="assets/frost-cosmos.svg" alt="Horizon lumineux Los Santos">
+              <figcaption>Horizon nocturne de Los Santos.</figcaption>
+            </figure>
+            <figure>
+              <img src="assets/frost-cosmos.svg" alt="Ambiance cosmique Frost">
+              <figcaption>Palette Frost: bleu neon et contraste net.</figcaption>
+            </figure>
+            <figure>
+              <img src="assets/frost-city.svg" alt="Ville Los Santos de nuit">
+              <figcaption>Skyline 2035 et flux urbains continus.</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <section class="module" data-block="ad">
+        <div class="module-tools">
+          <span class="module-label">Publicite</span>
+          <span class="resize-handle toolbar-resize-handle" data-resize-dir="se" title="Redimensionner"></span>
+        </div>
+        <div class="module-content ad-content">
+          <p class="ad-mark">PUBLICITE</p>
+          <h3>VOTRE MARQUE ICI</h3>
+          <figure class="ad-media">
+            <img src="assets/frost-city.svg" alt="Espace publicitaire Frost News">
+          </figure>
+          <p>Format premium print + digital pour toucher Los Santos 2035.</p>
+          <p class="ad-cta">Si vous voulez une pub dans le journal, contactez Frost News au 555-86999.</p>
+        </div>
+      </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="workspace-pane preview-pane">
+      <div class="workspace-pane-head">Apercu export</div>
+      <div id="preview-surface" class="workspace-canvas preview-canvas" aria-label="Apercu de rendu export"></div>
+    </section>
+  </main>
+</body>
+</html>
