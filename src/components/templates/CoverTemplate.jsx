@@ -16,6 +16,9 @@ export default function CoverTemplate({ page, project, dimensions }) {
   const showHeadline = page.showHeadline !== false;
   const showTicker = page.showTicker !== false;
   const showCoverCorners = page.showCorners;
+  const topInset = page.showDevice ? page.journalTopInset ?? 0 : 0;
+  const bottomInset = page.showDevice ? page.journalBottomInset ?? 0 : 0;
+  const panelRightInset = page.showDevice ? page.journalRightInset ?? 3 : 0;
 
   return (
     <div className="relative h-full w-full overflow-hidden" style={{ borderRadius: radius }}>
@@ -23,16 +26,28 @@ export default function CoverTemplate({ page, project, dimensions }) {
       {page.glow && <NeonBorder styleObj={styleObj} radius={radius} />}
       <SideDevice page={page} assets={project.assets} styleObj={styleObj} />
       {page.showVerticalBand !== false && bandWidth > 0 && (
-        <FrostVerticalBand page={page} styleObj={styleObj} assets={project.assets} />
+        <FrostVerticalBand
+          page={page}
+          styleObj={styleObj}
+          assets={project.assets}
+          topInset={topInset}
+          bottomInset={bottomInset}
+        />
       )}
 
-      <div className="absolute inset-y-0 right-0 z-[5]" style={{ left: `${leftOffset}%` }}>
+      <div
+        className="absolute z-[5]"
+        style={{ left: `${leftOffset}%`, right: `${panelRightInset}%`, top: `${topInset}%`, bottom: `${bottomInset}%` }}
+      >
         <div className="absolute inset-0 bg-black/22" />
       </div>
       <div
-        className="pointer-events-none absolute inset-y-[0.9%] right-[0.8%] z-[16] rounded-[10px]"
+        className="pointer-events-none absolute z-[16] rounded-[10px]"
         style={{
           left: `${leftOffset + 0.35}%`,
+          right: `${panelRightInset + 0.8}%`,
+          top: `${topInset + 0.8}%`,
+          bottom: `${bottomInset + 0.8}%`,
           border: `1px solid ${styleObj.cyan}66`,
           boxShadow: page.glow
             ? `0 0 18px ${styleObj.blueGlow}66, inset 0 0 20px ${styleObj.blueGlow}22`
@@ -40,9 +55,16 @@ export default function CoverTemplate({ page, project, dimensions }) {
         }}
       />
 
-      {page.showTopMeta && <MetaStrip page={page} assets={project.assets} styleObj={styleObj} />}
+      {page.showTopMeta && <MetaStrip page={page} assets={project.assets} styleObj={styleObj} topInset={topInset} />}
       {showCoverCorners && (
-        <DecorativeCorners assets={project.assets} style={styleObj} page={page} panelLeft={leftOffset} />
+        <DecorativeCorners
+          assets={project.assets}
+          style={styleObj}
+          page={page}
+          panelLeft={leftOffset}
+          topInset={topInset}
+          bottomInset={bottomInset}
+        />
       )}
 
       {showHeadline && (
@@ -50,7 +72,7 @@ export default function CoverTemplate({ page, project, dimensions }) {
           className="absolute z-30 flex items-center overflow-hidden"
           style={{
             left: `${leftOffset + 1.5}%`,
-            right: "2.5%",
+            right: `${2.5 + panelRightInset}%`,
             top: `${page.headlineBarY}%`,
             height: `${page.headlineBarH}%`,
             background: "rgba(0,0,0,0.92)",
@@ -77,7 +99,7 @@ export default function CoverTemplate({ page, project, dimensions }) {
       )}
 
       {showTicker && (
-        <div className="absolute inset-x-0 bottom-0 z-30">
+        <div className="absolute z-30" style={{ left: `${leftOffset}%`, right: `${panelRightInset}%`, bottom: `${bottomInset}%` }}>
           <div
             className="flex h-[7.2%] items-center bg-black/95 px-3"
             style={{ borderTop: `1px solid ${styleObj.cyan}44` }}

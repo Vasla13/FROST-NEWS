@@ -1,15 +1,23 @@
-export default function DecorativeCorners({ assets, style, page, panelLeft = 0, bottomOffset }) {
+export default function DecorativeCorners({
+  assets,
+  style,
+  page,
+  panelLeft = 0,
+  bottomOffset,
+  topInset = 0,
+  bottomInset = 0,
+}) {
   const useImages = page.showCorners;
-  const cyan = style.cyan;
   const panelLeftValue = `calc(${panelLeft}% + 0.05%)`;
-  const panelBottom = typeof bottomOffset === "number" ? `${bottomOffset}%` : page.showTicker ? "7.2%" : "2.2%";
-  const topOffset = "2.6%";
+  const panelBottomValue = typeof bottomOffset === "number" ? bottomOffset + bottomInset : (page.showTicker ? 7.2 : 2.2) + bottomInset;
+  const panelBottom = `${panelBottomValue}%`;
+  const topOffset = `${topInset + 2.6}%`;
   const cornerSize = "clamp(74px, 11cqw, 150px)";
 
   const fallbackCorner = (position, className, styleOverride = {}) => (
     <div
       className={`absolute ${className}`}
-      style={{ width: cornerSize, height: cornerSize, color: cyan, opacity: 0.95, ...styleOverride }}
+      style={{ width: cornerSize, height: cornerSize, color: style.cyan, opacity: 0.95, ...styleOverride }}
     >
       <svg viewBox="0 0 64 64" className="h-full w-full">
         <path

@@ -2,6 +2,7 @@ import { Download } from "lucide-react";
 
 import { FORMAT_OPTIONS } from "../../constants/project";
 import PageCanvas from "./PageCanvas";
+import Input from "../ui/Input";
 import Select from "../ui/Select";
 
 export default function PreviewPanel({
@@ -10,10 +11,14 @@ export default function PreviewPanel({
   dimensions,
   busyExport,
   onChangeFormat,
+  onChangeCustomWidth,
+  onChangeCustomHeight,
   onExportCurrent,
   onExportAllPdf,
   pageRefSetter,
 }) {
+  const customMode = project.meta.format === "CUSTOM";
+
   return (
     <main className="col-span-12 flex flex-col bg-black md:col-span-6 xl:col-span-7">
       <div className="flex flex-wrap items-center gap-2 border-b border-cyan-400/10 bg-slate-950/50 p-3">
@@ -25,6 +30,28 @@ export default function PreviewPanel({
             </option>
           ))}
         </Select>
+        {customMode && (
+          <>
+            <div className="ml-2 text-xs text-cyan-200/60">W</div>
+            <Input
+              type="number"
+              min={320}
+              max={5000}
+              value={project.meta.customWidth ?? dimensions.w}
+              onChange={(event) => onChangeCustomWidth(event.target.value)}
+              className="w-[96px]"
+            />
+            <div className="text-xs text-cyan-200/60">H</div>
+            <Input
+              type="number"
+              min={320}
+              max={5000}
+              value={project.meta.customHeight ?? dimensions.h}
+              onChange={(event) => onChangeCustomHeight(event.target.value)}
+              className="w-[96px]"
+            />
+          </>
+        )}
 
         <div className="ml-2 text-xs text-cyan-200/60">Dimensions:</div>
         <div className="rounded-lg border border-cyan-300/20 px-2 py-1 text-xs text-cyan-100">

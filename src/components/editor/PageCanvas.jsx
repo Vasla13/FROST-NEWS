@@ -4,7 +4,7 @@ import ArticleTemplate from "../templates/ArticleTemplate";
 import CoverTemplate from "../templates/CoverTemplate";
 
 export default function PageCanvas({ page, project, pageRef }) {
-  const dimensions = parseFormat(project.meta.format);
+  const dimensions = parseFormat(project.meta.format, project.meta.customWidth, project.meta.customHeight);
   const radius = project.meta.borderRadius || 0;
 
   return (

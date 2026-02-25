@@ -29,10 +29,12 @@ export default function PageSettingsTab({ selectedPage, setPage, uploadPageImage
       imageX: 50,
       imageY: 50,
       opacityPhoto: 0.96,
-      leftBandWidth: 8.5,
-      sideDeviceWidth: 13.5,
-      journalTopInset: 4.2,
-      journalBottomInset: 3.4,
+      leftBandWidth: 12.5,
+      sideDeviceWidth: 14,
+      journalTopInset: 0,
+      journalBottomInset: 0,
+      journalRightInset: 3,
+      logoStripScale: 0.5,
       headlineBarY: 69,
       headlineBarH: 8.2,
       headlineFont: 4.2,
@@ -213,6 +215,23 @@ export default function PageSettingsTab({ selectedPage, setPage, uploadPageImage
             <Field label="Largeur device (%)">
               <Slider min={0} max={18} value={selectedPage.sideDeviceWidth || 0} onChange={(value) => setPage({ sideDeviceWidth: value })} />
             </Field>
+
+            {selectedPage.template === "cover" && (
+              <>
+                <Field label="Decalage haut journal (%)">
+                  <Slider min={0} max={12} step={0.1} value={selectedPage.journalTopInset ?? 0} onChange={(value) => setPage({ journalTopInset: value })} />
+                </Field>
+                <Field label="Decalage bas journal (%)">
+                  <Slider min={0} max={12} step={0.1} value={selectedPage.journalBottomInset ?? 0} onChange={(value) => setPage({ journalBottomInset: value })} />
+                </Field>
+                <Field label="Marge droite journal (%)">
+                  <Slider min={0} max={10} step={0.1} value={selectedPage.journalRightInset ?? 0} onChange={(value) => setPage({ journalRightInset: value })} />
+                </Field>
+                <Field label="Scale logo bande">
+                  <Slider min={0.3} max={0.9} step={0.01} value={selectedPage.logoStripScale ?? 0.5} onChange={(value) => setPage({ logoStripScale: value })} />
+                </Field>
+              </>
+            )}
 
             {selectedPage.template === "cover" && (
               <>

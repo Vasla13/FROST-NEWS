@@ -37,6 +37,15 @@ function waitForPaint() {
   });
 }
 
+function clampFormatDimension(value) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return null;
+  }
+
+  return Math.max(320, Math.min(5000, Math.round(parsed)));
+}
+
 export default function App() {
   const [project, setProject] = useState(defaultProject);
   const [selectedPageId, setSelectedPageId] = useState("");
@@ -299,7 +308,7 @@ export default function App() {
     onError: (message) => alert(message),
   });
 
-  const dimensions = parseFormat(project.meta.format);
+  const dimensions = parseFormat(project.meta.format, project.meta.customWidth, project.meta.customHeight);
 
   return (
     <div className="h-screen w-full bg-[var(--frost-bg)] text-white">
@@ -319,7 +328,42 @@ export default function App() {
           selectedPage={selectedPage}
           dimensions={dimensions}
           busyExport={busyExport}
-          onChangeFormat={(value) => setProjectMeta({ format: value })}
+          onChangeFormat={(value) => {
+            if (value === "CUSTOM") {
+              setProjectMeta({
+                format: "CUSTOM",
+                customWidth: project.meta.customWidth ?? dimensions.w,
+                customHeight: project.meta.customHeight ?? dimensions.h,
+              });
+              return;
+            }
+
+            setProjectMeta({ format: value });
+          }}
+          onChangeCustomWidth={(value) => {
+            const width = clampFormatDimension(value);
+            if (width === null) {
+              return;
+            }
+
+            setProjectMeta({
+              format: "CUSTOM",
+              customWidth: width,
+              customHeight: project.meta.customHeight ?? dimensions.h,
+            });
+          }}
+          onChangeCustomHeight={(value) => {
+            const height = clampFormatDimension(value);
+            if (height === null) {
+              return;
+            }
+
+            setProjectMeta({
+              format: "CUSTOM",
+              customWidth: project.meta.customWidth ?? dimensions.w,
+              customHeight: height,
+            });
+          }}
           onExportCurrent={exportCurrent}
           onExportAllPdf={exportAllPdf}
           pageRefSetter={(element) => {

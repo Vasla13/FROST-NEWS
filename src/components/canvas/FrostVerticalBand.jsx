@@ -8,6 +8,7 @@ export default function FrostVerticalBand({
 }) {
   const left = page.showDevice ? page.sideDeviceWidth : 0;
   const hasLogoStrip = Boolean(assets?.logoStamp);
+  const stripScale = page.logoStripScale ?? 0.5;
 
   return (
     <div
@@ -28,7 +29,7 @@ export default function FrostVerticalBand({
           style={{
             objectPosition: "left top",
             opacity: 0.98,
-            transform: "scale(0.5)",
+            transform: `scale(${stripScale})`,
             transformOrigin: "left top",
           }}
         />

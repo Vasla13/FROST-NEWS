@@ -15,17 +15,33 @@ export default function ArticleTemplate({ page, project }) {
   const bandWidth = page.showVerticalBand === false ? 0 : page.leftBandWidth;
   const leftOffset = sideWidth + bandWidth;
   const radius = project.meta.borderRadius;
+  const topInset = page.showDevice ? page.journalTopInset ?? 0 : 0;
+  const bottomInset = page.showDevice ? page.journalBottomInset ?? 0 : 0;
+  const panelRightInset = page.showDevice ? page.journalRightInset ?? 0 : 0;
 
   return (
     <div className="relative h-full w-full overflow-hidden" style={{ borderRadius: radius }}>
       <BackgroundPhoto page={page} styleObj={styleObj} />
       {page.glow && <NeonBorder styleObj={styleObj} radius={radius} />}
       <SideDevice page={page} assets={project.assets} styleObj={styleObj} />
-      {page.showVerticalBand !== false && bandWidth > 0 && <FrostVerticalBand page={page} styleObj={styleObj} />}
-      {page.showTopMeta && <MetaStrip page={page} assets={project.assets} styleObj={styleObj} />}
-      <DecorativeCorners assets={project.assets} style={styleObj} page={page} panelLeft={leftOffset} bottomOffset={3.2} />
+      {page.showVerticalBand !== false && bandWidth > 0 && (
+        <FrostVerticalBand page={page} styleObj={styleObj} assets={project.assets} topInset={topInset} bottomInset={bottomInset} />
+      )}
+      {page.showTopMeta && <MetaStrip page={page} assets={project.assets} styleObj={styleObj} topInset={topInset} />}
+      <DecorativeCorners
+        assets={project.assets}
+        style={styleObj}
+        page={page}
+        panelLeft={leftOffset}
+        bottomOffset={3.2}
+        topInset={topInset}
+        bottomInset={bottomInset}
+      />
 
-      <div className="absolute inset-y-0 right-0 z-10" style={{ left: `${leftOffset + 1.5}%` }}>
+      <div
+        className="absolute z-10"
+        style={{ left: `${leftOffset + 1.5}%`, right: `${panelRightInset}%`, top: `${topInset}%`, bottom: `${bottomInset}%` }}
+      >
         <div className="absolute inset-0 bg-black/52" />
         <div className="absolute inset-0 p-[3.2%]">
           <div

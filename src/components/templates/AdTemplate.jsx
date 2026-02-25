@@ -15,6 +15,9 @@ export default function AdTemplate({ page, project }) {
   const bandWidth = page.showVerticalBand === false ? 0 : page.leftBandWidth;
   const leftOffset = sideWidth + bandWidth;
   const radius = project.meta.borderRadius;
+  const topInset = page.showDevice ? page.journalTopInset ?? 0 : 0;
+  const bottomInset = page.showDevice ? page.journalBottomInset ?? 0 : 0;
+  const panelRightInset = page.showDevice ? page.journalRightInset ?? 0 : 0;
 
   return (
     <div className="relative h-full w-full overflow-hidden" style={{ borderRadius: radius }}>
@@ -22,12 +25,30 @@ export default function AdTemplate({ page, project }) {
       {page.glow && <NeonBorder styleObj={styleObj} radius={radius} />}
       <SideDevice page={page} assets={project.assets} styleObj={styleObj} />
       {page.showVerticalBand !== false && bandWidth > 0 && (
-        <FrostVerticalBand page={page} styleObj={styleObj} title="FROST ADS" />
+        <FrostVerticalBand
+          page={page}
+          styleObj={styleObj}
+          assets={project.assets}
+          title="FROST ADS"
+          topInset={topInset}
+          bottomInset={bottomInset}
+        />
       )}
-      {page.showTopMeta && <MetaStrip page={page} assets={project.assets} styleObj={styleObj} />}
-      <DecorativeCorners assets={project.assets} style={styleObj} page={page} panelLeft={leftOffset} bottomOffset={3.2} />
+      {page.showTopMeta && <MetaStrip page={page} assets={project.assets} styleObj={styleObj} topInset={topInset} />}
+      <DecorativeCorners
+        assets={project.assets}
+        style={styleObj}
+        page={page}
+        panelLeft={leftOffset}
+        bottomOffset={3.2}
+        topInset={topInset}
+        bottomInset={bottomInset}
+      />
 
-      <div className="absolute inset-y-0 right-0 z-10 p-[3%]" style={{ left: `${leftOffset + 1.2}%` }}>
+      <div
+        className="absolute z-10 p-[3%]"
+        style={{ left: `${leftOffset + 1.2}%`, right: `${panelRightInset}%`, top: `${topInset}%`, bottom: `${bottomInset}%` }}
+      >
         <div className="absolute inset-0 bg-black/38" />
         <div
           className="relative flex h-full flex-col rounded-2xl border p-5"

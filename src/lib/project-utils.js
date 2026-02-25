@@ -25,6 +25,8 @@ export function defaultProject() {
     meta: {
       title: "Frost News Journal",
       format: "1080x1350",
+      customWidth: 1080,
+      customHeight: 1350,
       backgroundOutside: "#050A0F",
       borderRadius: 8,
       padding: 12,
@@ -95,7 +97,17 @@ export function hydrateProject(rawProject) {
   };
 }
 
-export function parseFormat(format) {
+export function parseFormat(format, customWidth = 1080, customHeight = 1350) {
+  if (format === "CUSTOM") {
+    const width = Number(customWidth);
+    const height = Number(customHeight);
+
+    return {
+      w: Number.isFinite(width) ? Math.max(320, Math.min(5000, Math.round(width))) : 1080,
+      h: Number.isFinite(height) ? Math.max(320, Math.min(5000, Math.round(height))) : 1350,
+    };
+  }
+
   if (format === "A4") {
     return { w: 1240, h: 1754 };
   }
