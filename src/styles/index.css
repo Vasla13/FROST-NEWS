@@ -68,3 +68,80 @@ body {
 .font-frost-pixel {
   font-family: var(--font-pixel);
 }
+
+@keyframes ticker-tv-roll {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 8px;
+  }
+}
+
+@keyframes ticker-holo-sweep {
+  0% {
+    transform: translateX(-180%);
+    opacity: 0;
+  }
+  16% {
+    opacity: 0.35;
+  }
+  58% {
+    opacity: 0.16;
+  }
+  100% {
+    transform: translateX(320%);
+    opacity: 0;
+  }
+}
+
+@keyframes ticker-tv-flicker {
+  0%,
+  100% {
+    opacity: 0.13;
+  }
+  23% {
+    opacity: 0.22;
+  }
+  49% {
+    opacity: 0.1;
+  }
+  74% {
+    opacity: 0.2;
+  }
+}
+
+.ticker-tv-scan {
+  animation: ticker-tv-roll 5.2s linear infinite;
+}
+
+.ticker-holo-sweep {
+  animation: ticker-holo-sweep 4.4s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.ticker-tv-static {
+  animation: ticker-tv-flicker 1.8s steps(2, end) infinite;
+}
+
+@keyframes cover-holo-lines {
+  0% {
+    background-position: 0 0, 0 0, 0 0, -140% 0;
+    opacity: 0.9;
+  }
+  35% {
+    opacity: 0.98;
+  }
+  58% {
+    opacity: 0.86;
+  }
+  100% {
+    background-position: 0 0, 0 8px, 0 0, 170% 0;
+    opacity: 0.9;
+  }
+}
+
+.cover-holo-layer {
+  animation: cover-holo-lines 6.4s linear infinite;
+  will-change: background-position, opacity;
+}

@@ -38,7 +38,7 @@ export default function PageSettingsTab({ selectedPage, setPage, uploadPageImage
       headlineBarY: 74.8,
       headlineBarH: 9,
       headlineFont: 4.9,
-      tickerHeight: 7.4,
+      tickerHeight: 4.2,
       showDevice: true,
       showTopMeta: true,
       showCorners: false,
@@ -306,6 +306,9 @@ export default function PageSettingsTab({ selectedPage, setPage, uploadPageImage
                 </Field>
                 <Field label="Taille titre">
                   <Slider min={2.5} max={7} step={0.1} value={selectedPage.headlineFont || 5.1} onChange={(value) => setPage({ headlineFont: value })} />
+                </Field>
+                <Field label="Hauteur ticker">
+                  <Slider min={2.4} max={5.2} step={0.1} value={selectedPage.tickerHeight ?? 4.2} onChange={(value) => setPage({ tickerHeight: value })} />
                 </Field>
               </>
             )}

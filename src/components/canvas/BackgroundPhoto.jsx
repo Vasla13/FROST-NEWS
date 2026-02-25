@@ -2,7 +2,7 @@ import { Image as ImageIcon } from "lucide-react";
 
 import { clamp } from "../../lib/project-utils";
 
-export default function BackgroundPhoto({ page, styleObj }) {
+export default function BackgroundPhoto({ page, styleObj, disableOverlays = false }) {
   const backgroundStyle =
     page.bgMode === "solid"
       ? { background: page.bgColor || styleObj.dark }
@@ -24,7 +24,7 @@ export default function BackgroundPhoto({ page, styleObj }) {
             opacity: page.opacityPhoto ?? 1,
             filter:
               page.template === "cover"
-                ? "contrast(1.1) saturate(1.28) brightness(1.02) hue-rotate(8deg)"
+                ? "contrast(1.03) saturate(1.22) brightness(1.06) hue-rotate(8deg)"
                 : "contrast(1.02) saturate(0.95) brightness(0.95)",
           }}
         />
@@ -36,7 +36,7 @@ export default function BackgroundPhoto({ page, styleObj }) {
           </div>
         </div>
       )}
-      {page.template === "cover" && (
+      {page.template === "cover" && !disableOverlays && (
         <div
           className="pointer-events-none absolute inset-0"
           style={{
@@ -48,7 +48,7 @@ export default function BackgroundPhoto({ page, styleObj }) {
           }}
         />
       )}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/18" />
+      {!disableOverlays && <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/18" />}
     </div>
   );
 }

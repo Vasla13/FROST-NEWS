@@ -1,10 +1,8 @@
 import BackgroundPhoto from "../canvas/BackgroundPhoto";
 import DecorativeCorners from "../canvas/DecorativeCorners";
 import FrostVerticalBand from "../canvas/FrostVerticalBand";
-import Grain from "../canvas/Grain";
 import MetaStrip from "../canvas/MetaStrip";
 import NeonBorder from "../canvas/NeonBorder";
-import Scanlines from "../canvas/Scanlines";
 import SideDevice from "../canvas/SideDevice";
 
 export default function CoverTemplate({ page, project, dimensions }) {
@@ -19,12 +17,12 @@ export default function CoverTemplate({ page, project, dimensions }) {
   const topInset = page.showDevice ? page.journalTopInset ?? 0 : 0;
   const bottomInset = page.showDevice ? page.journalBottomInset ?? 0 : 0;
   const panelRightInset = page.showDevice ? page.journalRightInset ?? 3 : 0;
-  const tickerHeight = Math.min(page.tickerHeight ?? 7.4, 8);
-  const tickerBottom = bottomInset + 0.1;
+  const tickerHeight = Math.min(page.tickerHeight ?? 4.2, 4.9);
+  const tickerBottom = bottomInset;
 
   return (
     <div className="relative h-full w-full overflow-hidden" style={{ borderRadius: radius }}>
-      <BackgroundPhoto page={page} styleObj={styleObj} />
+      <BackgroundPhoto page={page} styleObj={styleObj} disableOverlays />
       {page.glow && <NeonBorder styleObj={styleObj} radius={radius} />}
       <SideDevice page={page} assets={project.assets} styleObj={styleObj} />
       {page.showVerticalBand !== false && bandWidth > 0 && (
@@ -38,40 +36,23 @@ export default function CoverTemplate({ page, project, dimensions }) {
       )}
 
       <div
-        className="absolute z-[5]"
-        style={{ left: `${leftOffset}%`, right: `${panelRightInset}%`, top: `${topInset}%`, bottom: `${bottomInset}%` }}
-      >
-        <div className="absolute inset-0 bg-black/12" />
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-[24%]"
-          style={{ background: `linear-gradient(180deg, ${styleObj.blueGlow}26 0%, transparent 100%)` }}
-        />
-      </div>
-      <div
-        className="pointer-events-none absolute z-[16] rounded-[10px]"
+        className="cover-holo-layer pointer-events-none absolute z-[11]"
         style={{
-          left: `${leftOffset + 0.35}%`,
-          right: `${panelRightInset + 0.8}%`,
-          top: `${topInset + 0.8}%`,
-          bottom: `${bottomInset + 0.8}%`,
-          border: `1px solid ${styleObj.cyan}66`,
+          left: `${leftOffset}%`,
+          right: 0,
+          top: 0,
+          bottom: 0,
+          borderTopRightRadius: radius,
+          borderBottomRightRadius: radius,
+          backdropFilter: "saturate(126%) brightness(1.03)",
+          backgroundImage: `linear-gradient(180deg, rgba(8,20,36,0.24) 0%, rgba(7,18,34,0.2) 48%, rgba(5,14,28,0.3) 100%), repeating-linear-gradient(to bottom, rgba(170,243,255,0.1) 0px, rgba(170,243,255,0.1) 1px, rgba(9,22,38,0.0) 2px, rgba(9,22,38,0.0) 4px), repeating-linear-gradient(90deg, rgba(123,224,240,0.028) 0px, rgba(123,224,240,0.028) 2px, rgba(9,26,44,0.0) 3px, rgba(9,26,44,0.0) 5px), linear-gradient(120deg, rgba(255,255,255,0) 41%, rgba(130,244,255,0.1) 50%, rgba(255,255,255,0) 59%), radial-gradient(circle at 98% 52%, rgba(101,220,242,0.1) 0%, rgba(101,220,242,0.0) 24%)`,
+          backgroundSize: "100% 100%, 100% 8px, 9px 100%, 180% 100%, 100% 100%",
+          backgroundPosition: "0 0, 0 0, 0 0, -140% 0, 0 0",
           boxShadow: page.glow
-            ? `0 0 18px ${styleObj.blueGlow}66, inset 0 0 20px ${styleObj.blueGlow}22`
-            : `inset 0 0 0 1px ${styleObj.cyan}22`,
+            ? `inset 0 0 20px ${styleObj.blueGlow}24, inset 0 0 38px rgba(5,14,28,0.36)`
+            : "inset 0 0 22px rgba(5,14,28,0.3)",
         }}
       />
-      <div
-        className="pointer-events-none absolute z-[16]"
-        style={{
-          left: `${leftOffset + 0.4}%`,
-          right: `${panelRightInset + 0.9}%`,
-          top: `${topInset + 0.5}%`,
-          height: "1px",
-          background: `linear-gradient(90deg, transparent 0%, ${styleObj.blueGlow}cc 45%, ${styleObj.blueGlow}cc 55%, transparent 100%)`,
-          opacity: 0.85,
-        }}
-      />
-
       {page.showTopMeta && <MetaStrip page={page} assets={project.assets} styleObj={styleObj} topInset={topInset} />}
       {showCoverCorners && (
         <DecorativeCorners
@@ -144,19 +125,59 @@ export default function CoverTemplate({ page, project, dimensions }) {
       {showTicker && (
         <div
           className="absolute z-30 overflow-hidden"
-          style={{ left: `${leftOffset}%`, right: `${panelRightInset}%`, bottom: `${tickerBottom}%`, height: `${tickerHeight}%` }}
+          style={{
+            left: `${leftOffset}%`,
+            right: 0,
+            bottom: `${tickerBottom}%`,
+            height: `${tickerHeight}%`,
+            borderBottomRightRadius: radius,
+          }}
         >
           <div
-            className="absolute inset-x-0 top-0 flex h-full items-center bg-[#041228]/95 px-3"
-            style={{ borderTop: `1px solid ${styleObj.cyan}66`, borderBottom: `1px solid ${styleObj.cyan}44` }}
+            className="absolute inset-0"
+            style={{
+              background: "linear-gradient(180deg, rgba(5,18,34,0.74) 0%, rgba(3,12,24,0.62) 100%)",
+              borderTop: `1px solid ${styleObj.cyan}88`,
+              borderBottomRightRadius: radius,
+              boxShadow: page.glow ? `0 0 12px ${styleObj.blueGlow}3f, inset 0 0 16px ${styleObj.blueGlow}29` : `inset 0 0 8px ${styleObj.cyan}24`,
+              backdropFilter: "blur(1.2px) saturate(130%)",
+            }}
+          />
+          <div
+            className="ticker-tv-scan pointer-events-none absolute inset-0"
+            style={{
+              opacity: 0.24,
+              backgroundImage:
+                "repeating-linear-gradient(to bottom, rgba(170,243,255,0.62) 0px, rgba(170,243,255,0.62) 1px, rgba(9,24,41,0.14) 2px, rgba(9,24,41,0.14) 4px)",
+              mixBlendMode: "screen",
+            }}
+          />
+          <div
+            className="ticker-tv-static pointer-events-none absolute inset-0"
+            style={{
+              opacity: 0.16,
+              backgroundImage:
+                "linear-gradient(90deg, rgba(130, 244, 255, 0.08) 0%, rgba(130, 244, 255, 0.22) 48%, rgba(130, 244, 255, 0.08) 100%), repeating-linear-gradient(90deg, rgba(9,26,44,0.0) 0px, rgba(9,26,44,0.0) 2px, rgba(123,224,240,0.08) 3px)",
+            }}
+          />
+          <div
+            className="ticker-holo-sweep pointer-events-none absolute inset-y-0 -left-1/2 w-1/2"
+            style={{
+              background: `linear-gradient(90deg, transparent 0%, ${styleObj.cyan}a8 48%, transparent 100%)`,
+              filter: "blur(4px)",
+            }}
+          />
+          <div
+            className="relative z-10 flex h-full items-center px-2.5"
           >
             <div
               className="font-frost-tech w-full truncate text-center font-bold"
               style={{
                 fontFamily: styleObj.fontTech || "var(--font-tech)",
                 color: styleObj.cyanSoft,
-                fontSize: "clamp(13px, 1.65cqw, 24px)",
-                letterSpacing: "0.01em",
+                fontSize: "clamp(13px, 1.62cqw, 23px)",
+                letterSpacing: "0.02em",
+                textShadow: page.glow ? `0 0 8px ${styleObj.blueGlow}78` : `0 0 3px ${styleObj.cyan}45`,
               }}
             >
               -// {page.ticker1} //-
@@ -165,9 +186,6 @@ export default function CoverTemplate({ page, project, dimensions }) {
         </div>
       )}
 
-      <div className="pointer-events-none absolute inset-0 z-[15]" style={{ boxShadow: "inset 0 0 90px rgba(0,0,0,0.55)" }} />
-      {page.showScanlines && <Scanlines opacity={0.05} />}
-      {page.grain && <Grain opacity={0.04} />}
     </div>
   );
 }

@@ -65,7 +65,7 @@ export const PAGE_PRESETS = {
     headlineBarY: 74.8,
     headlineBarH: 9,
     headlineFont: 4.9,
-    tickerHeight: 7.4,
+    tickerHeight: 4.2,
     showTopMeta: true,
     showDevice: true,
     showCorners: false,
