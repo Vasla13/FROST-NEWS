@@ -1,0 +1,105 @@
+import BackgroundPhoto from "../canvas/BackgroundPhoto";
+import DecorativeCorners from "../canvas/DecorativeCorners";
+import FrostVerticalBand from "../canvas/FrostVerticalBand";
+import Grain from "../canvas/Grain";
+import MetaStrip from "../canvas/MetaStrip";
+import NeonBorder from "../canvas/NeonBorder";
+import Scanlines from "../canvas/Scanlines";
+import SideDevice from "../canvas/SideDevice";
+
+export default function CoverTemplate({ page, project, dimensions }) {
+  const styleObj = project.style;
+  const sideWidth = page.showDevice ? page.sideDeviceWidth : 0;
+  const bandWidth = page.showVerticalBand === false ? 0 : page.leftBandWidth;
+  const leftOffset = sideWidth + bandWidth;
+  const radius = project.meta.borderRadius;
+  const showHeadline = page.showHeadline !== false;
+  const showTicker = page.showTicker !== false;
+  const showCoverCorners = page.showCorners;
+
+  return (
+    <div className="relative h-full w-full overflow-hidden" style={{ borderRadius: radius }}>
+      <BackgroundPhoto page={page} styleObj={styleObj} />
+      {page.glow && <NeonBorder styleObj={styleObj} radius={radius} />}
+      <SideDevice page={page} assets={project.assets} styleObj={styleObj} />
+      {page.showVerticalBand !== false && bandWidth > 0 && (
+        <FrostVerticalBand page={page} styleObj={styleObj} assets={project.assets} />
+      )}
+
+      <div className="absolute inset-y-0 right-0 z-[5]" style={{ left: `${leftOffset}%` }}>
+        <div className="absolute inset-0 bg-black/22" />
+      </div>
+      <div
+        className="pointer-events-none absolute inset-y-[0.9%] right-[0.8%] z-[16] rounded-[10px]"
+        style={{
+          left: `${leftOffset + 0.35}%`,
+          border: `1px solid ${styleObj.cyan}66`,
+          boxShadow: page.glow
+            ? `0 0 18px ${styleObj.blueGlow}66, inset 0 0 20px ${styleObj.blueGlow}22`
+            : `inset 0 0 0 1px ${styleObj.cyan}22`,
+        }}
+      />
+
+      {page.showTopMeta && <MetaStrip page={page} assets={project.assets} styleObj={styleObj} />}
+      {showCoverCorners && (
+        <DecorativeCorners assets={project.assets} style={styleObj} page={page} panelLeft={leftOffset} />
+      )}
+
+      {showHeadline && (
+        <div
+          className="absolute z-30 flex items-center overflow-hidden"
+          style={{
+            left: `${leftOffset + 1.5}%`,
+            right: "2.5%",
+            top: `${page.headlineBarY}%`,
+            height: `${page.headlineBarH}%`,
+            background: "rgba(0,0,0,0.92)",
+            border: `1px solid ${styleObj.cyan}55`,
+            boxShadow: page.glow ? `0 0 14px ${styleObj.blueGlow}50` : "none",
+          }}
+        >
+          <div
+            className="absolute inset-0 opacity-10"
+            style={{ background: `linear-gradient(90deg, transparent 0%, ${styleObj.cyan} 35%, transparent 70%)` }}
+          />
+          <div
+            className="font-frost-pixel relative z-10 w-full px-4 text-center font-black tracking-wide"
+            style={{
+              fontFamily: styleObj.fontPixel || "var(--font-pixel)",
+              color: styleObj.cyan,
+              fontSize: `clamp(16px, ${(page.headlineFont || 4.6)}cqw, 54px)`,
+              textShadow: page.glow ? `0 0 10px ${styleObj.blueGlow}66` : "none",
+            }}
+          >
+            {page.subject}
+          </div>
+        </div>
+      )}
+
+      {showTicker && (
+        <div className="absolute inset-x-0 bottom-0 z-30">
+          <div
+            className="flex h-[7.2%] items-center bg-black/95 px-3"
+            style={{ borderTop: `1px solid ${styleObj.cyan}44` }}
+          >
+            <div
+              className="font-frost-tech w-full truncate text-center font-bold"
+              style={{
+                fontFamily: styleObj.fontTech || "var(--font-tech)",
+                color: styleObj.cyanSoft,
+                fontSize: "clamp(13px, 1.85cqw, 28px)",
+                letterSpacing: "0.018em",
+              }}
+            >
+              -// {page.ticker1} //-
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="pointer-events-none absolute inset-0 z-[15]" style={{ boxShadow: "inset 0 0 90px rgba(0,0,0,0.55)" }} />
+      {page.showScanlines && <Scanlines opacity={0.05} />}
+      {page.grain && <Grain opacity={0.04} />}
+    </div>
+  );
+}
