@@ -55,6 +55,29 @@ export default function PageSettingsTab({ selectedPage, setPage, uploadPageImage
     });
   };
 
+  const applyArticlePreset = () => {
+    setPage({
+      ...PAGE_PRESETS.article,
+      name: selectedPage.name || PAGE_PRESETS.article.name,
+      kicker: selectedPage.kicker || PAGE_PRESETS.article.kicker,
+      issue: selectedPage.issue || PAGE_PRESETS.article.issue,
+      date: selectedPage.date || PAGE_PRESETS.article.date,
+      subject: selectedPage.subject || PAGE_PRESETS.article.subject,
+      body: selectedPage.body || PAGE_PRESETS.article.body,
+      subhead: selectedPage.subhead || PAGE_PRESETS.article.subhead,
+      author: selectedPage.author || PAGE_PRESETS.article.author,
+      section: selectedPage.section || PAGE_PRESETS.article.section,
+      quote: selectedPage.quote || PAGE_PRESETS.article.quote,
+      quoteAuthor: selectedPage.quoteAuthor || PAGE_PRESETS.article.quoteAuthor,
+      imageUrl: selectedPage.imageUrl || PAGE_PRESETS.article.imageUrl,
+      imageFit: selectedPage.imageFit || PAGE_PRESETS.article.imageFit,
+      imageScale: selectedPage.imageScale ?? PAGE_PRESETS.article.imageScale,
+      imageX: selectedPage.imageX ?? PAGE_PRESETS.article.imageX,
+      imageY: selectedPage.imageY ?? PAGE_PRESETS.article.imageY,
+      opacityPhoto: selectedPage.opacityPhoto ?? PAGE_PRESETS.article.opacityPhoto,
+    });
+  };
+
   return (
     <div className="space-y-4">
       <Field label="Nom de page">
@@ -103,6 +126,24 @@ export default function PageSettingsTab({ selectedPage, setPage, uploadPageImage
 
       {selectedPage.template === "article" && (
         <>
+          <div className="space-y-3 rounded-2xl border border-cyan-400/10 bg-slate-900/60 p-3">
+            <div className="text-xs font-bold tracking-wide text-cyan-100/90">Reglages article</div>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Numero">
+                <Input value={selectedPage.issue || ""} onChange={(event) => setPage({ issue: event.target.value })} />
+              </Field>
+              <Field label="Date">
+                <Input value={selectedPage.date || ""} onChange={(event) => setPage({ date: event.target.value })} />
+              </Field>
+            </div>
+            <button
+              onClick={applyArticlePreset}
+              className="w-full rounded-xl border border-cyan-300/30 bg-cyan-300/10 px-3 py-2 text-xs text-cyan-100 hover:border-cyan-300/50"
+            >
+              Appliquer preset editorial article
+            </button>
+          </div>
+
           <Field label="Sous-titre / Chapo">
             <TextArea rows={3} value={selectedPage.subhead || ""} onChange={(event) => setPage({ subhead: event.target.value })} />
           </Field>
@@ -116,6 +157,9 @@ export default function PageSettingsTab({ selectedPage, setPage, uploadPageImage
           </div>
           <Field label="Citation">
             <Input value={selectedPage.quote || ""} onChange={(event) => setPage({ quote: event.target.value })} />
+          </Field>
+          <Field label="Nom personne citation">
+            <Input value={selectedPage.quoteAuthor || ""} onChange={(event) => setPage({ quoteAuthor: event.target.value })} />
           </Field>
           <Field label="Corps de texte">
             <TextArea rows={6} value={selectedPage.body || ""} onChange={(event) => setPage({ body: event.target.value })} />
@@ -198,17 +242,15 @@ export default function PageSettingsTab({ selectedPage, setPage, uploadPageImage
               <Slider min={0} max={100} value={selectedPage.imageY ?? 50} onChange={(value) => setPage({ imageY: value })} />
             </Field>
 
-            {selectedPage.template === "cover" && (
-              <Field label="Opacite photo">
-                <Slider
-                  min={0.2}
-                  max={1}
-                  step={0.01}
-                  value={selectedPage.opacityPhoto ?? 1}
-                  onChange={(value) => setPage({ opacityPhoto: value })}
-                />
-              </Field>
-            )}
+            <Field label="Opacite photo">
+              <Slider
+                min={0.2}
+                max={1}
+                step={0.01}
+                value={selectedPage.opacityPhoto ?? 1}
+                onChange={(value) => setPage({ opacityPhoto: value })}
+              />
+            </Field>
 
             <Field label="Largeur bande gauche (%)">
               <Slider min={0} max={28} value={selectedPage.leftBandWidth || 0} onChange={(value) => setPage({ leftBandWidth: value })} />
@@ -217,7 +259,7 @@ export default function PageSettingsTab({ selectedPage, setPage, uploadPageImage
               <Slider min={0} max={18} value={selectedPage.sideDeviceWidth || 0} onChange={(value) => setPage({ sideDeviceWidth: value })} />
             </Field>
 
-            {selectedPage.template === "cover" && (
+            {(selectedPage.template === "cover" || selectedPage.template === "article") && (
               <>
                 <Field label="Decalage haut journal (%)">
                   <Slider min={0} max={12} step={0.1} value={selectedPage.journalTopInset ?? 0} onChange={(value) => setPage({ journalTopInset: value })} />
@@ -230,6 +272,26 @@ export default function PageSettingsTab({ selectedPage, setPage, uploadPageImage
                 </Field>
                 <Field label="Scale logo bande">
                   <Slider min={0.3} max={0.9} step={0.01} value={selectedPage.logoStripScale ?? 0.5} onChange={(value) => setPage({ logoStripScale: value })} />
+                </Field>
+              </>
+            )}
+
+            {selectedPage.template === "article" && (
+              <>
+                <Field label="Largeur texte article (%)">
+                  <Slider min={30} max={70} step={1} value={selectedPage.articleTextWidth ?? 42} onChange={(value) => setPage({ articleTextWidth: value })} />
+                </Field>
+                <Field label="Hauteur visuel colonne (%)">
+                  <Slider min={26} max={70} step={1} value={selectedPage.articleHeroHeight ?? 46} onChange={(value) => setPage({ articleHeroHeight: value })} />
+                </Field>
+                <Field label="Taille titre article">
+                  <Slider min={2.8} max={7.2} step={0.1} value={selectedPage.articleTitleSize ?? 5.8} onChange={(value) => setPage({ articleTitleSize: value })} />
+                </Field>
+                <Field label="Colonnes corps texte">
+                  <Select value={String(selectedPage.articleBodyColumns ?? 1)} onChange={(event) => setPage({ articleBodyColumns: Number(event.target.value) })}>
+                    <option value="1">1 colonne</option>
+                    <option value="2">2 colonnes</option>
+                  </Select>
                 </Field>
               </>
             )}
@@ -252,12 +314,22 @@ export default function PageSettingsTab({ selectedPage, setPage, uploadPageImage
               <Toggle checked={!!selectedPage.showDevice} onChange={(value) => setPage({ showDevice: value })} label="Device" />
               <Toggle checked={!!selectedPage.showVerticalBand} onChange={(value) => setPage({ showVerticalBand: value })} label="Bande" />
               <Toggle checked={!!selectedPage.showTopMeta} onChange={(value) => setPage({ showTopMeta: value })} label="Meta" />
-              <Toggle checked={!!selectedPage.showHeadline} onChange={(value) => setPage({ showHeadline: value })} label="Titre barre" />
-              <Toggle checked={!!selectedPage.showTicker} onChange={(value) => setPage({ showTicker: value })} label="Ticker" />
               <Toggle checked={!!selectedPage.showCorners} onChange={(value) => setPage({ showCorners: value })} label="Corners" />
               <Toggle checked={!!selectedPage.glow} onChange={(value) => setPage({ glow: value })} label="Glow" />
               <Toggle checked={!!selectedPage.grain} onChange={(value) => setPage({ grain: value })} label="Grain" />
               <Toggle checked={!!selectedPage.showScanlines} onChange={(value) => setPage({ showScanlines: value })} label="Scanlines" />
+              {selectedPage.template === "cover" && (
+                <>
+                  <Toggle checked={!!selectedPage.showHeadline} onChange={(value) => setPage({ showHeadline: value })} label="Titre barre" />
+                  <Toggle checked={!!selectedPage.showTicker} onChange={(value) => setPage({ showTicker: value })} label="Ticker" />
+                </>
+              )}
+              {selectedPage.template === "article" && (
+                <>
+                  <Toggle checked={selectedPage.articleShowImageCard !== false} onChange={(value) => setPage({ articleShowImageCard: value })} label="Visuel side" />
+                  <Toggle checked={selectedPage.articleShowQuoteCard !== false} onChange={(value) => setPage({ articleShowQuoteCard: value })} label="Citation side" />
+                </>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
