@@ -1,7 +1,7 @@
 export default function MetaStrip({ page, assets, styleObj, topInset = 0 }) {
   const techFont = styleObj.fontTech || "var(--font-tech)";
-  const stripWidth = "clamp(14px, 2cqw, 26px)";
-  const stripHeight = "clamp(96px, 18cqw, 220px)";
+  const stripWidth = "clamp(12px, 1.6cqw, 18px)";
+  const stripHeight = "clamp(100px, 16cqw, 180px)";
 
   return (
     <div
@@ -11,24 +11,21 @@ export default function MetaStrip({ page, assets, styleObj, topInset = 0 }) {
         top: `calc(${topInset}% + 1%)`,
       }}
     >
-      {assets.metaStrip ? (
-        <img src={assets.metaStrip} alt="meta strip" className="object-contain" style={{ width: stripWidth, height: stripHeight }} />
-      ) : (
+      <div className="flex flex-col items-center gap-1.5" style={{ color: styleObj.cyanSoft, fontFamily: techFont }}>
+        <div className="font-frost-tech text-[clamp(20px,2.3cqw,34px)] font-black tracking-tight">{page.issue}</div>
         <div
-          className="flex flex-col items-center gap-1 text-[10px] sm:text-xs"
-          style={{ color: styleObj.cyanSoft, fontFamily: techFont }}
-        >
-          <div className="font-bold tracking-widest">{page.issue}</div>
-          <div
-            className="h-10 w-4 bg-repeat-y opacity-90"
-            style={{
-              backgroundImage: `repeating-linear-gradient(to bottom, ${styleObj.cyanSoft} 0px, ${styleObj.cyanSoft} 2px, transparent 2px, transparent 4px)`,
-            }}
-          />
-          <div className="text-lg leading-none opacity-90">x</div>
-          <div className="text-[12px] leading-none">o</div>
-        </div>
-      )}
+          className="w-[clamp(5px,0.55cqw,8px)] bg-repeat-y opacity-95"
+          style={{
+            height: "clamp(58px, 9cqw, 96px)",
+            backgroundImage: `repeating-linear-gradient(to bottom, ${styleObj.cyanSoft} 0px, ${styleObj.cyanSoft} 2px, transparent 2px, transparent 5px)`,
+          }}
+        />
+        <div className="text-[clamp(16px,2cqw,28px)] leading-none opacity-90">x</div>
+        <div className="text-[clamp(14px,1.6cqw,22px)] leading-none">◎</div>
+      </div>
+      {assets.metaStrip ? (
+        <img src={assets.metaStrip} alt="meta strip" className="object-contain opacity-90" style={{ width: stripWidth, height: stripHeight }} />
+      ) : null}
       <div
         className="font-frost-tech font-black tracking-tight"
         style={{
@@ -36,7 +33,7 @@ export default function MetaStrip({ page, assets, styleObj, topInset = 0 }) {
           color: styleObj.cyanSoft,
           writingMode: "vertical-rl",
           textOrientation: "mixed",
-          fontSize: "clamp(12px, 1.9cqw, 26px)",
+          fontSize: "clamp(14px, 2.2cqw, 32px)",
           letterSpacing: "0.04em",
           lineHeight: 1,
           textTransform: "uppercase",

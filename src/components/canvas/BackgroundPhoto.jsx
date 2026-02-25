@@ -22,7 +22,10 @@ export default function BackgroundPhoto({ page, styleObj }) {
             objectPosition: `${clamp(page.imageX, 0, 100)}% ${clamp(page.imageY, 0, 100)}%`,
             transform: `scale(${page.imageScale || 1})`,
             opacity: page.opacityPhoto ?? 1,
-            filter: page.template === "cover" ? "contrast(1.03) saturate(1.02) brightness(0.95)" : "contrast(1.02) saturate(0.95) brightness(0.95)",
+            filter:
+              page.template === "cover"
+                ? "contrast(1.1) saturate(1.28) brightness(1.02) hue-rotate(8deg)"
+                : "contrast(1.02) saturate(0.95) brightness(0.95)",
           }}
         />
       ) : (
