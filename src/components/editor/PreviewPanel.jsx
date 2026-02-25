@@ -14,7 +14,6 @@ export default function PreviewPanel({
   onChangeCustomWidth,
   onChangeCustomHeight,
   onExportCurrent,
-  onExportAllPdf,
   pageRefSetter,
 }) {
   const customMode = project.meta.format === "CUSTOM";
@@ -60,32 +59,11 @@ export default function PreviewPanel({
 
         <div className="ml-auto flex flex-wrap items-center gap-2">
           <button
-            onClick={() => onExportCurrent("png")}
+            onClick={onExportCurrent}
             disabled={busyExport}
             className="inline-flex items-center gap-1 rounded-xl border border-cyan-300/30 bg-cyan-300/10 px-3 py-2 text-xs text-cyan-100 hover:border-cyan-300/50 disabled:opacity-50"
           >
-            <Download className="h-3.5 w-3.5" /> PNG
-          </button>
-          <button
-            onClick={() => onExportCurrent("jpeg")}
-            disabled={busyExport}
-            className="inline-flex items-center gap-1 rounded-xl border border-cyan-300/20 px-3 py-2 text-xs hover:border-cyan-300/40 disabled:opacity-50"
-          >
-            JPG
-          </button>
-          <button
-            onClick={() => onExportCurrent("pdf")}
-            disabled={busyExport}
-            className="inline-flex items-center gap-1 rounded-xl border border-cyan-300/20 px-3 py-2 text-xs hover:border-cyan-300/40 disabled:opacity-50"
-          >
-            PDF page
-          </button>
-          <button
-            onClick={onExportAllPdf}
-            disabled={busyExport}
-            className="inline-flex items-center gap-1 rounded-xl border border-cyan-300/20 px-3 py-2 text-xs hover:border-cyan-300/40 disabled:opacity-50"
-          >
-            PDF journal
+            <Download className="h-3.5 w-3.5" /> GIF
           </button>
         </div>
       </div>

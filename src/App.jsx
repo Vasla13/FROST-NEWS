@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import PageCanvas from "./components/editor/PageCanvas";
 import InspectorPanel from "./components/editor/InspectorPanel";
 import PageSidebar from "./components/editor/PageSidebar";
 import PreviewPanel from "./components/editor/PreviewPanel";
 import { STORAGE_KEY } from "./constants/project";
 import useObjectUrlUpload from "./hooks/useObjectUrlUpload";
-import { exportNodeAsImage, exportNodesAsPdf } from "./lib/export-utils";
+import { exportNodeAsGif } from "./lib/export-utils";
 import {
   createPageFromPreset,
   defaultProject,
@@ -18,24 +17,6 @@ import {
 
 const MAX_AUTOSAVE_BYTES = 4_500_000;
 const AUTOSAVE_DEBOUNCE_MS = 350;
-
-function toSafeFileName(value) {
-  const normalized = String(value || "frost-news")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^\w-]/g, "");
-
-  return normalized || "frost-news";
-}
-
-function waitForPaint() {
-  return new Promise((resolve) => {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(resolve);
-    });
-  });
-}
 
 function clampFormatDimension(value) {
   const parsed = Number(value);
@@ -51,9 +32,7 @@ export default function App() {
   const [selectedPageId, setSelectedPageId] = useState("");
   const [tab, setTab] = useState("page");
   const [busyExport, setBusyExport] = useState(false);
-  const [renderExportDeck, setRenderExportDeck] = useState(false);
   const previewPageRefs = useRef({});
-  const exportPageRefs = useRef({});
   const hasShownStorageWarning = useRef(false);
 
   useEffect(() => {
@@ -258,48 +237,25 @@ export default function App() {
     URL.revokeObjectURL(url);
   };
 
-  const exportCurrent = async (type) => {
+  const exportCurrent = async () => {
     if (!selectedPage) {
       return;
     }
 
-    const node = previewPageRefs.current[selectedPage.id] || exportPageRefs.current[selectedPage.id];
+    const node = previewPageRefs.current[selectedPage.id];
     if (!node) {
       return;
     }
 
     setBusyExport(true);
     try {
-      if (type === "pdf") {
-        await exportNodesAsPdf([node], selectedPage.name || "page");
-      } else {
-        await exportNodeAsImage(node, selectedPage.name || "page", type);
-      }
+      await exportNodeAsGif(node, selectedPage.name || "page", {
+        renderer: "standard",
+      });
     } catch (error) {
       console.error(error);
       alert("Erreur export. Attends le chargement complet des images et recommence.");
     } finally {
-      setBusyExport(false);
-    }
-  };
-
-  const exportAllPdf = async () => {
-    setBusyExport(true);
-    setRenderExportDeck(true);
-    try {
-      await waitForPaint();
-      const nodes = project.pages.map((page) => exportPageRefs.current[page.id]).filter(Boolean);
-      if (nodes.length !== project.pages.length) {
-        throw new Error("missing-export-pages");
-      }
-
-      await exportNodesAsPdf(nodes, toSafeFileName(project.meta.title));
-    } catch (error) {
-      console.error(error);
-      alert("Erreur export PDF multi-pages");
-    } finally {
-      exportPageRefs.current = {};
-      setRenderExportDeck(false);
       setBusyExport(false);
     }
   };
@@ -365,7 +321,6 @@ export default function App() {
             });
           }}
           onExportCurrent={exportCurrent}
-          onExportAllPdf={exportAllPdf}
           pageRefSetter={(element) => {
             if (!selectedPage?.id) {
               return;
@@ -394,28 +349,6 @@ export default function App() {
           resetProject={resetProject}
         />
       </div>
-
-      {renderExportDeck && (
-        <div aria-hidden="true" className="pointer-events-none fixed left-[-20000px] top-0 z-[-1]">
-          <div className="space-y-6 bg-black p-0">
-            {project.pages.map((page) => (
-              <div key={`export-${page.id}`} className="w-[900px]">
-                <PageCanvas
-                  page={page}
-                  project={project}
-                  pageRef={(element) => {
-                    if (element) {
-                      exportPageRefs.current[page.id] = element;
-                    } else {
-                      delete exportPageRefs.current[page.id];
-                    }
-                  }}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

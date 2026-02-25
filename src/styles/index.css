@@ -16,6 +16,8 @@
   --font-ui: "Rajdhani", "Share Tech Mono", sans-serif;
   --font-tech: "Share Tech Mono", monospace;
   --font-pixel: "VT323", monospace;
+  --frost-export-anim-delay: 0ms;
+  --frost-export-anim-state: running;
 }
 
 html,
@@ -83,11 +85,11 @@ body {
     transform: translateX(-180%);
     opacity: 0;
   }
-  16% {
-    opacity: 0.35;
+  14% {
+    opacity: 0.42;
   }
-  58% {
-    opacity: 0.16;
+  56% {
+    opacity: 0.18;
   }
   100% {
     transform: translateX(320%);
@@ -113,35 +115,126 @@ body {
 
 .ticker-tv-scan {
   animation: ticker-tv-roll 5.2s linear infinite;
+  animation-delay: var(--frost-export-anim-delay);
+  animation-play-state: var(--frost-export-anim-state);
 }
 
 .ticker-holo-sweep {
-  animation: ticker-holo-sweep 4.4s ease-in-out infinite;
+  animation: ticker-holo-sweep 3.8s cubic-bezier(0.37, 0.01, 0.36, 1) infinite;
+  animation-delay: var(--frost-export-anim-delay);
+  animation-play-state: var(--frost-export-anim-state);
   will-change: transform, opacity;
 }
 
 .ticker-tv-static {
   animation: ticker-tv-flicker 1.8s steps(2, end) infinite;
+  animation-delay: var(--frost-export-anim-delay);
+  animation-play-state: var(--frost-export-anim-state);
 }
 
 @keyframes cover-holo-lines {
   0% {
-    background-position: 0 0, 0 0, 0 0, -140% 0;
-    opacity: 0.9;
+    background-position: 0 0, 0 0, 0 0, -140% 0, 0 0, 0 0;
+    opacity: 0.92;
   }
-  35% {
+  26% {
     opacity: 0.98;
   }
-  58% {
+  47% {
     opacity: 0.86;
   }
+  63% {
+    opacity: 0.96;
+  }
   100% {
-    background-position: 0 0, 0 8px, 0 0, 170% 0;
-    opacity: 0.9;
+    background-position: 0 0, 0 10px, 4px 0, 170% 0, 0 0, 0 0;
+    opacity: 0.91;
+  }
+}
+
+@keyframes cover-cyber-flicker {
+  0%,
+  100% {
+    filter: brightness(1.02);
+  }
+  18% {
+    filter: brightness(1.05);
+  }
+  52% {
+    filter: brightness(0.98);
+  }
+  76% {
+    filter: brightness(1.04);
   }
 }
 
 .cover-holo-layer {
-  animation: cover-holo-lines 6.4s linear infinite;
-  will-change: background-position, opacity;
+  animation: cover-holo-lines 6.2s linear infinite, cover-cyber-flicker 2.6s steps(2, end) infinite;
+  animation-delay: var(--frost-export-anim-delay), var(--frost-export-anim-delay);
+  animation-play-state: var(--frost-export-anim-state), var(--frost-export-anim-state);
+  will-change: background-position, opacity, filter;
+}
+
+@keyframes crt-scan-drift {
+  0% {
+    transform: translateY(0px);
+    opacity: 0.16;
+  }
+  52% {
+    opacity: 0.1;
+  }
+  100% {
+    transform: translateY(4px);
+    opacity: 0.15;
+  }
+}
+
+@keyframes crt-glass-flicker {
+  0%,
+  100% {
+    opacity: 0.68;
+  }
+  22% {
+    opacity: 0.72;
+  }
+  57% {
+    opacity: 0.62;
+  }
+  81% {
+    opacity: 0.7;
+  }
+}
+
+.cover-crt-layer {
+  isolation: isolate;
+}
+
+.cover-crt-layer::before,
+.cover-crt-layer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.cover-crt-layer::before {
+  background-image:
+    repeating-linear-gradient(to bottom, rgba(190, 248, 255, 0.2) 0px, rgba(190, 248, 255, 0.2) 1px, rgba(0, 0, 0, 0) 2px, rgba(0, 0, 0, 0) 4px),
+    repeating-linear-gradient(90deg, rgba(255, 90, 210, 0.02) 0px, rgba(255, 90, 210, 0.02) 1px, rgba(95, 235, 255, 0.02) 2px, rgba(95, 235, 255, 0.02) 3px);
+  mix-blend-mode: screen;
+  opacity: 0.14;
+  animation: crt-scan-drift 7.2s linear infinite;
+  animation-delay: var(--frost-export-anim-delay);
+  animation-play-state: var(--frost-export-anim-state);
+}
+
+.cover-crt-layer::after {
+  background-image:
+    radial-gradient(ellipse at center, rgba(255, 255, 255, 0) 56%, rgba(1, 5, 12, 0.4) 100%),
+    linear-gradient(90deg, rgba(255, 60, 190, 0.06) 0%, rgba(255, 255, 255, 0) 16%, rgba(95, 235, 255, 0.06) 100%);
+  mix-blend-mode: multiply;
+  opacity: 0.68;
+  animation: crt-glass-flicker 2.9s steps(2, end) infinite;
+  animation-delay: var(--frost-export-anim-delay);
+  animation-play-state: var(--frost-export-anim-state);
 }

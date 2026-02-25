@@ -11,9 +11,10 @@ export default function BackgroundPhoto({ page, styleObj, disableOverlays = fals
         };
 
   return (
-    <div className="absolute inset-0 z-0" style={backgroundStyle}>
+    <div data-frost-export-bg-root className="absolute inset-0 z-0" style={backgroundStyle}>
       {page.imageUrl ? (
         <img
+          data-frost-export-bg-photo
           src={page.imageUrl}
           alt="article visual"
           className="absolute inset-0 h-full w-full"
@@ -21,6 +22,7 @@ export default function BackgroundPhoto({ page, styleObj, disableOverlays = fals
             objectFit: page.imageFit || "cover",
             objectPosition: `${clamp(page.imageX, 0, 100)}% ${clamp(page.imageY, 0, 100)}%`,
             transform: `scale(${page.imageScale || 1})`,
+            transformOrigin: "50% 50%",
             opacity: page.opacityPhoto ?? 1,
             filter:
               page.template === "cover"
