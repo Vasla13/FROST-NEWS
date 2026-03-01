@@ -18,6 +18,36 @@ function downloadBlob(blob, filename) {
   URL.revokeObjectURL(url);
 }
 
+function canvasToBlob(canvas, type = "image/png", quality) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          reject(new Error("blob-generation-failed"));
+          return;
+        }
+        resolve(blob);
+      },
+      type,
+      quality
+    );
+  });
+}
+
+async function capturePngBlobFromDom(node, pixelRatio = 1) {
+  const { toBlob } = await import("html-to-image");
+  const blob = await toBlob(node, {
+    cacheBust: true,
+    backgroundColor: "transparent",
+    pixelRatio,
+    skipAutoScale: true,
+  });
+  if (!blob) {
+    throw new Error("dom-capture-failed");
+  }
+  return blob;
+}
+
 function waitForAnimationFrames(count = 1) {
   return new Promise((resolve) => {
     const step = (remaining) => {
@@ -123,32 +153,6 @@ function flattenCanvas(sourceCanvas, backgroundColor, targetCanvas = null) {
   return canvas;
 }
 
-function canvasHasVisiblePixels(canvas, alphaThreshold = 16) {
-  if (!canvas || canvas.width < 1 || canvas.height < 1) {
-    return false;
-  }
-
-  const context = canvas.getContext("2d", { willReadFrequently: true });
-  if (!context) {
-    return false;
-  }
-
-  const { width, height } = canvas;
-  const step = Math.max(1, Math.floor(Math.min(width, height) / 80));
-  const pixels = context.getImageData(0, 0, width, height).data;
-
-  for (let y = 0; y < height; y += step) {
-    for (let x = 0; x < width; x += step) {
-      const alpha = pixels[((y * width) + x) * 4 + 3];
-      if (alpha > alphaThreshold) {
-        return true;
-      }
-    }
-  }
-
-  return false;
-}
-
 function canvasHasRenderableContent(canvas) {
   if (!canvas || canvas.width < 2 || canvas.height < 2) {
     return false;
@@ -202,6 +206,71 @@ function canvasHasRenderableContent(canvas) {
   }
 
   return true;
+}
+
+function scoreCanvasFidelity(canvas) {
+  if (!canvas || canvas.width < 2 || canvas.height < 2) {
+    return 0;
+  }
+
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (!context) {
+    return 0;
+  }
+
+  const width = canvas.width;
+  const height = canvas.height;
+  const sampleStep = Math.max(2, Math.floor(Math.min(width, height) / 110));
+  const pixels = context.getImageData(0, 0, width, height).data;
+  const colorBuckets = new Set();
+  let visibleSamples = 0;
+  let luminanceSum = 0;
+  let luminanceSqSum = 0;
+  let edgeEnergy = 0;
+
+  for (let y = 0; y < height; y += sampleStep) {
+    for (let x = 0; x < width; x += sampleStep) {
+      const index = (y * width + x) * 4;
+      const red = pixels[index];
+      const green = pixels[index + 1];
+      const blue = pixels[index + 2];
+      const alpha = pixels[index + 3];
+
+      if (alpha < 12) {
+        continue;
+      }
+
+      visibleSamples += 1;
+      const luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+      luminanceSum += luminance;
+      luminanceSqSum += luminance * luminance;
+      colorBuckets.add(((red >> 4) << 8) | ((green >> 4) << 4) | (blue >> 4));
+
+      if (x + sampleStep < width) {
+        const nextIndex = (y * width + (x + sampleStep)) * 4;
+        edgeEnergy +=
+          Math.abs(red - pixels[nextIndex]) +
+          Math.abs(green - pixels[nextIndex + 1]) +
+          Math.abs(blue - pixels[nextIndex + 2]);
+      }
+      if (y + sampleStep < height) {
+        const nextIndex = ((y + sampleStep) * width + x) * 4;
+        edgeEnergy +=
+          Math.abs(red - pixels[nextIndex]) +
+          Math.abs(green - pixels[nextIndex + 1]) +
+          Math.abs(blue - pixels[nextIndex + 2]);
+      }
+    }
+  }
+
+  if (visibleSamples < 40) {
+    return 0;
+  }
+
+  const mean = luminanceSum / visibleSamples;
+  const variance = Math.max(0, luminanceSqSum / visibleSamples - mean * mean);
+  const normalizedEdges = edgeEnergy / visibleSamples;
+  return (colorBuckets.size * 0.9) + (Math.sqrt(variance) * 2.1) + (normalizedEdges * 0.06);
 }
 
 function getRelativeCanvasRect(sourceNode, element, scaleX, scaleY) {
@@ -381,59 +450,28 @@ function drawTextCentered(context, text, rect, style, sizeScale) {
   context.restore();
 }
 
-async function captureDateOverlay(sourceNode, html2canvas, scale) {
-  const dateElement = sourceNode?.querySelector?.("[data-frost-export-date-native]");
-  if (!dateElement) {
-    return null;
+function drawVerticalText(context, text, rect, style, sizeScale) {
+  if (!text) {
+    return;
   }
 
-  const rect = dateElement.getBoundingClientRect();
-  if (!rect.width || !rect.height) {
-    return null;
-  }
+  const fontSize = Math.max(1, (parseFloat(style.fontSize) || 16) * sizeScale);
+  const fontWeight = style.fontWeight || "700";
+  const fontFamily = style.fontFamily || "sans-serif";
+  const color = style.color || "#DFFBFF";
 
-  const captureOptions = {
-    backgroundColor: null,
-    scale,
-    useCORS: true,
-    logging: false,
-    scrollX: 0,
-    scrollY: 0,
-    windowWidth: document.documentElement.clientWidth,
-    windowHeight: document.documentElement.clientHeight,
-  };
-
-  let bitmap = null;
-  try {
-    bitmap = await html2canvas(dateElement, { ...captureOptions, foreignObjectRendering: true });
-  } catch {
-    bitmap = await html2canvas(dateElement, captureOptions);
-  }
-
-  if (!bitmap || !canvasHasVisiblePixels(bitmap)) {
-    return null;
-  }
-
-  // Protect against malformed captures that unexpectedly contain a full-page snapshot.
-  const expectedWidth = Math.max(1, rect.width * scale);
-  const expectedHeight = Math.max(1, rect.height * scale);
-  if (bitmap.width > expectedWidth * 3 || bitmap.height > expectedHeight * 3) {
-    return null;
-  }
-
-  const rootRect = sourceNode.getBoundingClientRect();
-  return {
-    rect: {
-      left: rect.left - rootRect.left,
-      top: rect.top - rootRect.top,
-      width: rect.width,
-      height: rect.height,
-    },
-    bitmap,
-  };
+  context.save();
+  context.translate(rect.left + (rect.width / 2), rect.top + (rect.height / 2));
+  context.rotate(Math.PI / 2);
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillStyle = color;
+  context.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+  context.fillText(text, 0, 0, rect.height);
+  context.restore();
 }
 
-function drawCoverTextOverlays(sourceNode, targetCanvas, dateOverlay = null) {
+function drawCoverTextOverlays(sourceNode, targetCanvas) {
   if (!sourceNode?.querySelector('[data-frost-template="cover"]')) {
     return;
   }
@@ -463,12 +501,10 @@ function drawCoverTextOverlays(sourceNode, targetCanvas, dateOverlay = null) {
     drawTextCentered(context, tickerElement.textContent?.trim(), rect, getComputedStyle(tickerElement), scaleY);
   }
 
-  if (dateOverlay?.bitmap) {
-    const x = dateOverlay.rect.left * scaleX;
-    const y = dateOverlay.rect.top * scaleY;
-    const w = dateOverlay.rect.width * scaleX;
-    const h = dateOverlay.rect.height * scaleY;
-    context.drawImage(dateOverlay.bitmap, x, y, w, h);
+  const dateElement = sourceNode.querySelector("[data-frost-export-date-native]");
+  if (dateElement) {
+    const rect = getRelativeCanvasRect(sourceNode, dateElement, scaleX, scaleY);
+    drawVerticalText(context, dateElement.textContent?.trim(), rect, getComputedStyle(dateElement), scaleY);
   }
 }
 
@@ -480,6 +516,7 @@ async function captureNodeCanvas(
     foreignObjectRendering = false,
     fallbackOnInvalidForeignObject = true,
     animationTimeMs = 0,
+    hideOverlayText = false,
     hideDateText = false,
     hideBackgroundImage = false,
   } = {}
@@ -514,15 +551,17 @@ async function captureNodeCanvas(
       clonedCanvasNode.style.setProperty("--frost-export-anim-delay", `${animationOffsetMs}ms`);
       clonedCanvasNode.style.setProperty("--frost-export-anim-state", "paused");
 
-      clonedCanvasNode
-        .querySelectorAll(
-          hideDateText
-            ? "[data-frost-export-title], [data-frost-export-ticker], [data-frost-export-date-native]"
-            : "[data-frost-export-title], [data-frost-export-ticker]"
-        )
-        .forEach((element) => {
-          element.style.visibility = "hidden";
-        });
+      if (hideOverlayText) {
+        clonedCanvasNode
+          .querySelectorAll(
+            hideDateText
+              ? "[data-frost-export-title], [data-frost-export-ticker], [data-frost-export-date-native]"
+              : "[data-frost-export-title], [data-frost-export-ticker]"
+          )
+          .forEach((element) => {
+            element.style.visibility = "hidden";
+          });
+      }
 
       if (hideBackgroundImage) {
         clonedCanvasNode.style.background = "transparent";
@@ -562,6 +601,71 @@ async function captureNodeCanvas(
   return html2canvas(node, baseOptions);
 }
 
+async function captureNodeCanvasExact(node, html2canvas, scale = 1.8) {
+  await waitForNodeAssets(node);
+  const rect = node.getBoundingClientRect();
+  const measuredWidth = Math.max(1, rect.width || 0);
+  const measuredHeight = Math.max(1, rect.height || 0);
+  const captureWidth = Math.max(1, Math.round(measuredWidth));
+  const captureHeight = Math.max(1, Math.round(measuredHeight));
+
+  const exactOptions = {
+    backgroundColor: null,
+    scale,
+    width: captureWidth,
+    height: captureHeight,
+    scrollX: 0,
+    scrollY: 0,
+    windowWidth: document.documentElement.clientWidth,
+    windowHeight: document.documentElement.clientHeight,
+    useCORS: true,
+    logging: false,
+  };
+
+  let standardCanvas = null;
+  let foreignObjectCanvas = null;
+
+  try {
+    standardCanvas = await html2canvas(node, exactOptions);
+  } catch {
+    standardCanvas = null;
+  }
+
+  try {
+    foreignObjectCanvas = await html2canvas(node, {
+      ...exactOptions,
+      foreignObjectRendering: true,
+    });
+  } catch {
+    foreignObjectCanvas = null;
+  }
+
+  const standardValid = canvasHasRenderableContent(standardCanvas);
+  const foreignValid = canvasHasRenderableContent(foreignObjectCanvas);
+
+  if (standardValid && foreignValid) {
+    const standardScore = scoreCanvasFidelity(standardCanvas);
+    const foreignScore = scoreCanvasFidelity(foreignObjectCanvas);
+    return foreignScore > standardScore * 1.03 ? foreignObjectCanvas : standardCanvas;
+  }
+
+  if (standardValid) {
+    return standardCanvas;
+  }
+  if (foreignValid) {
+    return foreignObjectCanvas;
+  }
+
+  if (standardCanvas) {
+    return standardCanvas;
+  }
+  if (foreignObjectCanvas) {
+    return foreignObjectCanvas;
+  }
+
+  return html2canvas(node, exactOptions);
+}
+
 export async function exportNodeAsImage(node, fileName, type = "png") {
   const html2canvas = (await import("html2canvas")).default;
   const canvas = await captureNodeCanvas(node, html2canvas, { scale: 2 });
@@ -571,6 +675,62 @@ export async function exportNodeAsImage(node, fileName, type = "png") {
   const dataUrl = canvas.toDataURL(mime, quality);
 
   downloadDataUrl(dataUrl, `${fileName}.${type === "jpeg" ? "jpg" : "png"}`);
+}
+
+export async function exportNodeAsPngUnderSize(node, fileName, options = {}) {
+  if (!node) {
+    return;
+  }
+
+  const maxBytes = Math.max(200_000, Math.round(options.maxBytes ?? 2 * 1024 * 1024));
+  const minScale = Math.max(0.3, Number(options.minScale ?? 0.5));
+  const maxAttempts = Math.max(3, Math.min(10, Math.round(options.maxAttempts ?? 8)));
+  const initialScale = Math.max(0.85, Number(options.scale ?? 1.8));
+  const html2canvas = (await import("html2canvas")).default;
+
+  let bestBlob = null;
+  let bestScale = null;
+  let currentScale = initialScale;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    let blob = null;
+    try {
+      blob = await capturePngBlobFromDom(node, currentScale);
+    } catch {
+      const canvas = await captureNodeCanvas(node, html2canvas, {
+        scale: currentScale,
+        foreignObjectRendering: true,
+        fallbackOnInvalidForeignObject: true,
+        hideOverlayText: false,
+        hideDateText: false,
+        hideBackgroundImage: false,
+      });
+      blob = await canvasToBlob(canvas, "image/png");
+    }
+
+    if (blob.size <= maxBytes) {
+      if (!bestBlob || (bestScale !== null && currentScale > bestScale)) {
+        bestBlob = blob;
+        bestScale = currentScale;
+      }
+      break;
+    }
+
+    const sizeRatio = maxBytes / blob.size;
+    const nextScale = Math.max(minScale, Number((currentScale * Math.sqrt(sizeRatio) * 0.96).toFixed(3)));
+
+    if (nextScale >= currentScale - 0.01) {
+      currentScale = Math.max(minScale, Number((currentScale * 0.88).toFixed(3)));
+    } else {
+      currentScale = nextScale;
+    }
+  }
+
+  if (!bestBlob) {
+    throw new Error("png-size-limit-unreachable");
+  }
+
+  downloadBlob(bestBlob, `${fileName}.png`);
 }
 
 export async function exportNodeAsGif(node, fileName, options = {}) {
@@ -596,8 +756,7 @@ export async function exportNodeAsGif(node, fileName, options = {}) {
   let lastSuccessfulCanvas = null;
   const isCoverTemplate = Boolean(node.querySelector('[data-frost-template="cover"]'));
   const hasCoverBackground = Boolean(node.querySelector("[data-frost-export-bg-photo]"));
-  let dateOverlay = null;
-  let hideDateText = false;
+  const hideDateText = isCoverTemplate;
   const hideBackgroundImage = isCoverTemplate && hasCoverBackground;
   const captureValidatedFrame = async (renderer, elapsedMs = 0) => {
     await waitForAnimationFrames(1);
@@ -607,6 +766,7 @@ export async function exportNodeAsGif(node, fileName, options = {}) {
       foreignObjectRendering: renderer === "foreignObject",
       fallbackOnInvalidForeignObject: false,
       animationTimeMs: elapsedMs,
+      hideOverlayText: true,
       hideDateText,
       hideBackgroundImage,
     });
@@ -627,16 +787,6 @@ export async function exportNodeAsGif(node, fileName, options = {}) {
     } catch {
       effectiveRenderer = "standard";
       await captureValidatedFrame(effectiveRenderer, 0);
-    }
-  }
-
-  if (isCoverTemplate) {
-    try {
-      dateOverlay = await captureDateOverlay(node, html2canvas, scale);
-      hideDateText = Boolean(dateOverlay?.bitmap);
-    } catch {
-      dateOverlay = null;
-      hideDateText = false;
     }
   }
 
@@ -677,7 +827,7 @@ export async function exportNodeAsGif(node, fileName, options = {}) {
         context.drawImage(canvas, 0, 0);
       }
     }
-    drawCoverTextOverlays(node, flattenBuffer, dateOverlay);
+    drawCoverTextOverlays(node, flattenBuffer);
     const context = flattenBuffer.getContext("2d", { willReadFrequently: true });
     if (!context) {
       throw new Error("missing-canvas-context");

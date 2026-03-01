@@ -80,23 +80,6 @@ body {
   }
 }
 
-@keyframes ticker-holo-sweep {
-  0% {
-    transform: translateX(-180%);
-    opacity: 0;
-  }
-  14% {
-    opacity: 0.42;
-  }
-  56% {
-    opacity: 0.18;
-  }
-  100% {
-    transform: translateX(320%);
-    opacity: 0;
-  }
-}
-
 @keyframes ticker-tv-flicker {
   0%,
   100% {
@@ -117,13 +100,6 @@ body {
   animation: ticker-tv-roll 5.2s linear infinite;
   animation-delay: var(--frost-export-anim-delay);
   animation-play-state: var(--frost-export-anim-state);
-}
-
-.ticker-holo-sweep {
-  animation: ticker-holo-sweep 3.8s cubic-bezier(0.37, 0.01, 0.36, 1) infinite;
-  animation-delay: var(--frost-export-anim-delay);
-  animation-play-state: var(--frost-export-anim-state);
-  will-change: transform, opacity;
 }
 
 .ticker-tv-static {
@@ -147,7 +123,7 @@ body {
     opacity: 0.96;
   }
   100% {
-    background-position: 0 0, 0 10px, 4px 0, 170% 0, 0 0, 0 0;
+    background-position: 0 0, 0 10px, 4px 0, -140% 0, 0 0, 0 0;
     opacity: 0.91;
   }
 }
@@ -237,4 +213,30 @@ body {
   animation: crt-glass-flicker 2.9s steps(2, end) infinite;
   animation-delay: var(--frost-export-anim-delay);
   animation-play-state: var(--frost-export-anim-state);
+}
+
+/* Export-safe fallback for the holographic layer:
+   avoid browser capture bugs that flatten backdrop-filter into a solid blue block. */
+[data-frost-export-mode="1"] .cover-holo-layer {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background-image:
+    linear-gradient(180deg, rgba(8, 18, 36, 0.22) 0%, rgba(7, 15, 32, 0.18) 46%, rgba(5, 10, 24, 0.3) 100%),
+    repeating-linear-gradient(to bottom, rgba(160, 246, 255, 0.12) 0px, rgba(160, 246, 255, 0.12) 1px, rgba(9, 22, 38, 0) 2px, rgba(9, 22, 38, 0) 4px),
+    repeating-linear-gradient(90deg, rgba(114, 230, 255, 0.035) 0px, rgba(114, 230, 255, 0.035) 2px, rgba(9, 20, 40, 0) 3px, rgba(9, 20, 40, 0) 5px),
+    linear-gradient(118deg, rgba(255, 255, 255, 0) 42%, rgba(120, 244, 255, 0.12) 52%, rgba(255, 255, 255, 0) 62%) !important;
+  background-size: 100% 100%, 100% 8px, 9px 100%, 165% 100% !important;
+  background-position: 0 0, 0 0, 0 0, -120% 0 !important;
+  box-shadow:
+    inset 0 0 16px rgba(101, 220, 242, 0.2),
+    inset 0 0 28px rgba(255, 78, 190, 0.1),
+    0 0 16px rgba(91, 236, 255, 0.1) !important;
+}
+
+[data-frost-export-mode="1"] .cover-crt-layer::before {
+  opacity: 0.11;
+}
+
+[data-frost-export-mode="1"] .cover-crt-layer::after {
+  opacity: 0.55;
 }

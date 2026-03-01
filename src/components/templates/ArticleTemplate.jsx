@@ -286,17 +286,35 @@ export default function ArticleTemplate({ page, project }) {
                     }}
                   >
                     {page.imageUrl ? (
-                      <img
-                        src={page.imageUrl}
-                        alt="illustration article"
-                        className="h-full w-full object-cover"
-                        style={{
-                          objectFit: page.imageFit || "cover",
-                          objectPosition: `${page.imageX ?? 50}% ${page.imageY ?? 50}%`,
-                          transform: `scale(${page.imageScale || 1})`,
-                          filter: "contrast(1.03) saturate(0.95) brightness(0.86)",
-                        }}
-                      />
+                      <>
+                        <img
+                          src={page.imageUrl}
+                          alt="illustration article"
+                          className="h-full w-full object-cover"
+                          style={{
+                            objectFit: page.imageFit || "cover",
+                            objectPosition: `${page.imageX ?? 50}% ${page.imageY ?? 50}%`,
+                            transform: `scale(${page.imageScale || 1})`,
+                            filter: "contrast(1.05) saturate(1.14) brightness(0.84) hue-rotate(6deg)",
+                          }}
+                        />
+                        <div
+                          className="pointer-events-none absolute inset-0"
+                          style={{
+                            background:
+                              "linear-gradient(160deg, rgba(140,228,243,0.42) 0%, rgba(17,63,102,0.12) 44%, rgba(255,95,191,0.26) 100%)",
+                            opacity: 0.28,
+                          }}
+                        />
+                        <div
+                          className="pointer-events-none absolute inset-0"
+                          style={{
+                            background:
+                              "linear-gradient(194deg, rgba(2,8,16,0.82) 6%, rgba(4,13,24,0.42) 46%, rgba(1,6,12,0.8) 100%)",
+                            opacity: 0.24,
+                          }}
+                        />
+                      </>
                     ) : (
                       <div className="absolute inset-0 grid place-items-center text-cyan-100/35">
                         <div className="text-center">

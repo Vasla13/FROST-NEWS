@@ -87,12 +87,34 @@ export default function AdTemplate({ page, project }) {
 
           <div className="mt-4 grid flex-1 place-items-center rounded-2xl border border-dashed" style={{ borderColor: `${styleObj.cyan}44`, background: "rgba(0,0,0,0.3)" }}>
             {page.imageUrl ? (
-              <img
-                src={page.imageUrl}
-                alt="pub"
-                className="h-full w-full object-contain p-2"
-                style={{ objectPosition: `${page.imageX}% ${page.imageY}%`, transform: `scale(${page.imageScale})` }}
-              />
+              <div className="relative h-full w-full overflow-hidden">
+                <img
+                  src={page.imageUrl}
+                  alt="pub"
+                  className="h-full w-full object-contain p-2"
+                  style={{
+                    objectPosition: `${page.imageX}% ${page.imageY}%`,
+                    transform: `scale(${page.imageScale})`,
+                    filter: "contrast(1.05) saturate(1.1) brightness(0.88) hue-rotate(7deg)",
+                  }}
+                />
+                <div
+                  className="pointer-events-none absolute inset-0"
+                  style={{
+                    background:
+                      "linear-gradient(160deg, rgba(140,228,243,0.38) 0%, rgba(20,66,104,0.1) 40%, rgba(255,95,191,0.24) 100%)",
+                    opacity: 0.26,
+                  }}
+                />
+                <div
+                  className="pointer-events-none absolute inset-0"
+                  style={{
+                    background:
+                      "linear-gradient(192deg, rgba(2,8,16,0.82) 8%, rgba(4,13,24,0.4) 45%, rgba(2,8,15,0.78) 100%)",
+                    opacity: 0.22,
+                  }}
+                />
+              </div>
             ) : (
               <div className="text-center text-cyan-100/50">
                 <ImageIcon className="mx-auto h-10 w-10" />

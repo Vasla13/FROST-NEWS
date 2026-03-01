@@ -9,27 +9,46 @@ export default function BackgroundPhoto({ page, styleObj, disableOverlays = fals
       : {
           background: `radial-gradient(circle at 65% 18%, ${styleObj.cyan}22, transparent 45%), linear-gradient(180deg, ${styleObj.panel}, ${styleObj.dark})`,
         };
+  const imageFilter =
+    page.template === "cover"
+      ? "contrast(1.04) saturate(1.2) brightness(1.02) hue-rotate(8deg)"
+      : "contrast(1.04) saturate(1.14) brightness(0.9) hue-rotate(6deg)";
 
   return (
     <div data-frost-export-bg-root className="absolute inset-0 z-0" style={backgroundStyle}>
       {page.imageUrl ? (
-        <img
-          data-frost-export-bg-photo
-          src={page.imageUrl}
-          alt="article visual"
-          className="absolute inset-0 h-full w-full"
-          style={{
-            objectFit: page.imageFit || "cover",
-            objectPosition: `${clamp(page.imageX, 0, 100)}% ${clamp(page.imageY, 0, 100)}%`,
-            transform: `scale(${page.imageScale || 1})`,
-            transformOrigin: "50% 50%",
-            opacity: page.opacityPhoto ?? 1,
-            filter:
-              page.template === "cover"
-                ? "contrast(1.03) saturate(1.22) brightness(1.06) hue-rotate(8deg)"
-                : "contrast(1.02) saturate(0.95) brightness(0.95)",
-          }}
-        />
+        <>
+          <img
+            data-frost-export-bg-photo
+            src={page.imageUrl}
+            alt="article visual"
+            className="absolute inset-0 h-full w-full"
+            style={{
+              objectFit: page.imageFit || "cover",
+              objectPosition: `${clamp(page.imageX, 0, 100)}% ${clamp(page.imageY, 0, 100)}%`,
+              transform: `scale(${page.imageScale || 1})`,
+              transformOrigin: "50% 50%",
+              opacity: page.opacityPhoto ?? 1,
+              filter: imageFilter,
+            }}
+          />
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(158deg, rgba(140,228,243,0.46) 2%, rgba(23,88,128,0.14) 43%, rgba(255,94,194,0.28) 100%)",
+              opacity: page.template === "cover" ? 0.34 : 0.28,
+            }}
+          />
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(192deg, rgba(2,9,17,0.82) 8%, rgba(4,14,24,0.46) 44%, rgba(2,8,15,0.78) 100%)",
+              opacity: page.template === "cover" ? 0.3 : 0.24,
+            }}
+          />
+        </>
       ) : (
         <div className="absolute inset-0 grid place-items-center text-center text-cyan-100/40">
           <div className="space-y-1">

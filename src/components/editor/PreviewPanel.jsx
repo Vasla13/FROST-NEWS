@@ -63,7 +63,7 @@ export default function PreviewPanel({
             disabled={busyExport}
             className="inline-flex items-center gap-1 rounded-xl border border-cyan-300/30 bg-cyan-300/10 px-3 py-2 text-xs text-cyan-100 hover:border-cyan-300/50 disabled:opacity-50"
           >
-            <Download className="h-3.5 w-3.5" /> GIF
+            <Download className="h-3.5 w-3.5" /> PNG (&lt; 2 Mo)
           </button>
         </div>
       </div>

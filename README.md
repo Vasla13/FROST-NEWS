@@ -31,4 +31,4 @@ npm run preview
 ## Notes
 
 - Autosave dans `localStorage`
-- Export PNG, JPG et PDF (page unique ou journal complet)
+- Export de la page courante en `PNG` optimise (< 2 Mo)

@@ -5,7 +5,7 @@ import PageSidebar from "./components/editor/PageSidebar";
 import PreviewPanel from "./components/editor/PreviewPanel";
 import { STORAGE_KEY } from "./constants/project";
 import useObjectUrlUpload from "./hooks/useObjectUrlUpload";
-import { exportNodeAsGif } from "./lib/export-utils";
+import { exportNodeAsPngUnderSize } from "./lib/export-utils";
 import {
   createPageFromPreset,
   defaultProject,
@@ -249,12 +249,12 @@ export default function App() {
 
     setBusyExport(true);
     try {
-      await exportNodeAsGif(node, selectedPage.name || "page", {
-        renderer: "standard",
+      await exportNodeAsPngUnderSize(node, selectedPage.name || "page", {
+        maxBytes: 2 * 1024 * 1024,
       });
     } catch (error) {
       console.error(error);
-      alert("Erreur export. Attends le chargement complet des images et recommence.");
+      alert("Export PNG impossible sous 2 Mo. Reduis la taille du format, puis recommence.");
     } finally {
       setBusyExport(false);
     }

@@ -166,13 +166,6 @@ export default function CoverTemplate({ page, project, dimensions }) {
             }}
           />
           <div
-            className="ticker-holo-sweep pointer-events-none absolute inset-y-0 -left-1/2 w-1/2"
-            style={{
-              background: `linear-gradient(90deg, transparent 0%, ${styleObj.cyan}a8 48%, transparent 100%)`,
-              filter: "blur(4px)",
-            }}
-          />
-          <div
             className="relative z-10 flex h-full items-center px-2.5"
           >
             <div
