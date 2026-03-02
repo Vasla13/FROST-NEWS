@@ -260,7 +260,14 @@ export default function App() {
     }
   };
 
-  const uploadPageImage = useObjectUrlUpload((data) => setPage({ imageUrl: data }), {
+  const uploadPageImage = useObjectUrlUpload((data) => {
+    if (selectedPage?.template === "article") {
+      setPage({ articleImageUrl: data });
+      return;
+    }
+
+    setPage({ imageUrl: data });
+  }, {
     onError: (message) => alert(message),
   });
 

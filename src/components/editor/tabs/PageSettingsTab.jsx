@@ -14,6 +14,25 @@ import Toggle from "../../ui/Toggle";
 
 export default function PageSettingsTab({ selectedPage, setPage, uploadPageImage }) {
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const isArticleTemplate = selectedPage.template === "article";
+
+  const setVisualImage = (url, patch = {}) => {
+    if (isArticleTemplate) {
+      setPage({ ...patch, articleImageUrl: url });
+      return;
+    }
+
+    setPage({ ...patch, imageUrl: url });
+  };
+
+  const clearVisualImage = () => {
+    if (isArticleTemplate) {
+      setPage({ articleImageUrl: "" });
+      return;
+    }
+
+    setPage({ imageUrl: "" });
+  };
 
   const applyTemplate = (kind) => {
     const base = PAGE_PRESETS[kind];
@@ -59,22 +78,26 @@ export default function PageSettingsTab({ selectedPage, setPage, uploadPageImage
     setPage({
       ...PAGE_PRESETS.article,
       name: selectedPage.name || PAGE_PRESETS.article.name,
-      kicker: selectedPage.kicker || PAGE_PRESETS.article.kicker,
-      issue: selectedPage.issue || PAGE_PRESETS.article.issue,
-      date: selectedPage.date || PAGE_PRESETS.article.date,
-      subject: selectedPage.subject || PAGE_PRESETS.article.subject,
-      body: selectedPage.body || PAGE_PRESETS.article.body,
-      subhead: selectedPage.subhead || PAGE_PRESETS.article.subhead,
-      author: selectedPage.author || PAGE_PRESETS.article.author,
-      section: selectedPage.section || PAGE_PRESETS.article.section,
-      quote: selectedPage.quote || PAGE_PRESETS.article.quote,
-      quoteAuthor: selectedPage.quoteAuthor || PAGE_PRESETS.article.quoteAuthor,
       imageUrl: selectedPage.imageUrl || PAGE_PRESETS.article.imageUrl,
+      articleImageUrl: selectedPage.articleImageUrl || selectedPage.imageUrl || PAGE_PRESETS.article.articleImageUrl || PAGE_PRESETS.article.imageUrl,
       imageFit: selectedPage.imageFit || PAGE_PRESETS.article.imageFit,
       imageScale: selectedPage.imageScale ?? PAGE_PRESETS.article.imageScale,
       imageX: selectedPage.imageX ?? PAGE_PRESETS.article.imageX,
       imageY: selectedPage.imageY ?? PAGE_PRESETS.article.imageY,
       opacityPhoto: selectedPage.opacityPhoto ?? PAGE_PRESETS.article.opacityPhoto,
+    });
+  };
+
+  const applyAdPreset = () => {
+    setPage({
+      ...PAGE_PRESETS.ad,
+      name: selectedPage.name || PAGE_PRESETS.ad.name,
+      adLayoutMode: selectedPage.adLayoutMode || PAGE_PRESETS.ad.adLayoutMode || "image-dominant",
+      imageUrl: selectedPage.imageUrl || PAGE_PRESETS.ad.imageUrl,
+      imageFit: selectedPage.imageFit || PAGE_PRESETS.ad.imageFit,
+      imageScale: selectedPage.imageScale ?? PAGE_PRESETS.ad.imageScale,
+      imageX: selectedPage.imageX ?? PAGE_PRESETS.ad.imageX,
+      imageY: selectedPage.imageY ?? PAGE_PRESETS.ad.imageY,
     });
   };
 
@@ -155,12 +178,23 @@ export default function PageSettingsTab({ selectedPage, setPage, uploadPageImage
               <Input value={selectedPage.author || ""} onChange={(event) => setPage({ author: event.target.value })} />
             </Field>
           </div>
-          <Field label="Citation">
-            <Input value={selectedPage.quote || ""} onChange={(event) => setPage({ quote: event.target.value })} />
-          </Field>
-          <Field label="Nom personne citation">
-            <Input value={selectedPage.quoteAuthor || ""} onChange={(event) => setPage({ quoteAuthor: event.target.value })} />
-          </Field>
+          <div className="flex flex-wrap gap-2">
+            <Toggle
+              checked={selectedPage.articleShowQuoteCard !== false}
+              onChange={(value) => setPage({ articleShowQuoteCard: value })}
+              label="Afficher citation"
+            />
+          </div>
+          {selectedPage.articleShowQuoteCard !== false && (
+            <>
+              <Field label="Citation">
+                <Input value={selectedPage.quote || ""} onChange={(event) => setPage({ quote: event.target.value })} />
+              </Field>
+              <Field label="Nom personne citation">
+                <Input value={selectedPage.quoteAuthor || ""} onChange={(event) => setPage({ quoteAuthor: event.target.value })} />
+              </Field>
+            </>
+          )}
           <Field label="Corps de texte">
             <TextArea rows={6} value={selectedPage.body || ""} onChange={(event) => setPage({ body: event.target.value })} />
           </Field>
@@ -169,6 +203,21 @@ export default function PageSettingsTab({ selectedPage, setPage, uploadPageImage
 
       {selectedPage.template === "ad" && (
         <>
+          <div className="space-y-3 rounded-2xl border border-cyan-400/10 bg-slate-900/60 p-3">
+            <div className="text-xs font-bold tracking-wide text-cyan-100/90">Reglages pub</div>
+            <Field label="Mise en page pub">
+              <Select value={selectedPage.adLayoutMode || "image-dominant"} onChange={(event) => setPage({ adLayoutMode: event.target.value })}>
+                <option value="image-dominant">Visuel dominant</option>
+                <option value="text-image">Texte + visuel</option>
+              </Select>
+            </Field>
+            <button
+              onClick={applyAdPreset}
+              className="w-full rounded-xl border border-cyan-300/30 bg-cyan-300/10 px-3 py-2 text-xs text-cyan-100 hover:border-cyan-300/50"
+            >
+              Appliquer preset pub premium
+            </button>
+          </div>
           <Field label="CTA">
             <Input value={selectedPage.cta || ""} onChange={(event) => setPage({ cta: event.target.value })} />
           </Field>
@@ -185,7 +234,7 @@ export default function PageSettingsTab({ selectedPage, setPage, uploadPageImage
             <Upload className="h-3.5 w-3.5" /> Upload image
             <input type="file" accept="image/*" onChange={uploadPageImage} className="hidden" />
           </label>
-          <button onClick={() => setPage({ imageUrl: "" })} className="rounded-xl border border-slate-700/60 px-2 py-1 text-[11px] text-slate-300">
+          <button onClick={clearVisualImage} className="rounded-xl border border-slate-700/60 px-2 py-1 text-[11px] text-slate-300">
             Effacer
           </button>
         </div>
@@ -194,19 +243,19 @@ export default function PageSettingsTab({ selectedPage, setPage, uploadPageImage
           <div className="text-[10px] uppercase tracking-widest text-cyan-200/60">Assets locaux (dossier assets)</div>
           <div className="flex flex-wrap gap-2">
             <button
-              onClick={() => setPage({ imageUrl: BUNDLED_PAGE_IMAGES.baseCover, imageFit: "cover", imageScale: 1, imageX: 50, imageY: 50 })}
+              onClick={() => setVisualImage(BUNDLED_PAGE_IMAGES.baseCover, { imageFit: "cover", imageScale: 1, imageX: 50, imageY: 50 })}
               className="rounded-lg border border-cyan-400/20 px-2 py-1 text-[11px] text-cyan-100 hover:border-cyan-300/40"
             >
               fond0
             </button>
             <button
-              onClick={() => setPage({ imageUrl: BUNDLED_PAGE_IMAGES.eyeLogo, imageFit: "contain", imageScale: 0.9, imageX: 50, imageY: 50 })}
+              onClick={() => setVisualImage(BUNDLED_PAGE_IMAGES.eyeLogo, { imageFit: "contain", imageScale: 0.9, imageX: 50, imageY: 50 })}
               className="rounded-lg border border-cyan-400/20 px-2 py-1 text-[11px] text-cyan-100 hover:border-cyan-300/40"
             >
               oeil frost (center)
             </button>
             <button
-              onClick={() => setPage({ imageUrl: BUNDLED_PAGE_IMAGES.eyeLogo, imageFit: "cover", imageScale: 1, imageX: 50, imageY: 44 })}
+              onClick={() => setVisualImage(BUNDLED_PAGE_IMAGES.eyeLogo, { imageFit: "cover", imageScale: 1, imageX: 50, imageY: 44 })}
               className="rounded-lg border border-cyan-400/20 px-2 py-1 text-[11px] text-cyan-100 hover:border-cyan-300/40"
             >
               oeil frost (cover)
@@ -278,11 +327,11 @@ export default function PageSettingsTab({ selectedPage, setPage, uploadPageImage
 
             {selectedPage.template === "article" && (
               <>
-                <Field label="Largeur texte article (%)">
-                  <Slider min={30} max={70} step={1} value={selectedPage.articleTextWidth ?? 42} onChange={(value) => setPage({ articleTextWidth: value })} />
+                <Field label="Poids texte haut (%)">
+                  <Slider min={45} max={90} step={1} value={selectedPage.articleTextWidth ?? 68} onChange={(value) => setPage({ articleTextWidth: value })} />
                 </Field>
-                <Field label="Hauteur visuel colonne (%)">
-                  <Slider min={26} max={70} step={1} value={selectedPage.articleHeroHeight ?? 46} onChange={(value) => setPage({ articleHeroHeight: value })} />
+                <Field label="Poids visuel bas (%)">
+                  <Slider min={18} max={60} step={1} value={selectedPage.articleHeroHeight ?? 30} onChange={(value) => setPage({ articleHeroHeight: value })} />
                 </Field>
                 <Field label="Taille titre article">
                   <Slider min={2.8} max={7.2} step={0.1} value={selectedPage.articleTitleSize ?? 5.8} onChange={(value) => setPage({ articleTitleSize: value })} />
@@ -329,8 +378,7 @@ export default function PageSettingsTab({ selectedPage, setPage, uploadPageImage
               )}
               {selectedPage.template === "article" && (
                 <>
-                  <Toggle checked={selectedPage.articleShowImageCard !== false} onChange={(value) => setPage({ articleShowImageCard: value })} label="Visuel side" />
-                  <Toggle checked={selectedPage.articleShowQuoteCard !== false} onChange={(value) => setPage({ articleShowQuoteCard: value })} label="Citation side" />
+                  <Toggle checked={selectedPage.articleShowImageCard !== false} onChange={(value) => setPage({ articleShowImageCard: value })} label="Visuel bas" />
                 </>
               )}
             </div>

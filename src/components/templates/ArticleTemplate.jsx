@@ -1,4 +1,5 @@
-import { CalendarDays, Clock3, FileText, Image as ImageIcon, Quote, UserRound } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Image as ImageIcon, Quote } from "lucide-react";
 
 import BackgroundPhoto from "../canvas/BackgroundPhoto";
 import DecorativeCorners from "../canvas/DecorativeCorners";
@@ -19,14 +20,6 @@ function splitParagraphs(text) {
     .filter(Boolean);
 }
 
-function estimateReadTime(paragraphs) {
-  const words = paragraphs
-    .join(" ")
-    .split(/\s+/)
-    .filter(Boolean).length;
-  return Math.max(1, Math.round(words / 180));
-}
-
 export default function ArticleTemplate({ page, project }) {
   const styleObj = project.style;
   const cq = (value) => `calc(var(--frost-cq, 1px) * ${value})`;
@@ -38,29 +31,125 @@ export default function ArticleTemplate({ page, project }) {
   const bottomInset = page.showDevice ? page.journalBottomInset ?? 0 : 0;
   const panelRightInset = page.showDevice ? page.journalRightInset ?? 0.8 : 0;
 
-  const textWidth = clamp(page.articleTextWidth ?? 42, 30, 72);
+  const bodyWeight = clamp(page.articleTextWidth ?? page.articleBodyHeight ?? 68, 45, 90);
   const titleSize = clamp(page.articleTitleSize ?? 5.8, 3.5, 7.2);
-  const sideVisualHeight = clamp(page.articleHeroHeight ?? 46, 28, 72);
+  const visualWeight = clamp(page.articleHeroHeight ?? page.articleVisualHeight ?? 30, 18, 60);
   const bodyColumns = clamp(Math.round(page.articleBodyColumns ?? 1), 1, 2);
   const rawParagraphs = splitParagraphs(page.body);
   const paragraphs = rawParagraphs.length ? rawParagraphs : ["Bloc de texte principal. Colle ton article ici."];
-  const readingMinutes = estimateReadTime(paragraphs);
 
   const showImageCard = page.articleShowImageCard !== false;
   const showQuoteCard = page.articleShowQuoteCard !== false;
-  const showSideColumn = showImageCard || showQuoteCard;
-  const hasSplitSide = showImageCard && showQuoteCard;
-  const splitQuoteHeight = hasSplitSide ? clamp(100 - sideVisualHeight - 2, 24, 36) : null;
-  const splitImageHeight = hasSplitSide ? 100 - splitQuoteHeight - 2 : null;
+  const hasSecondaryCards = showImageCard || showQuoteCard;
+  const flowStackRef = useRef(null);
+  const textContentRef = useRef(null);
+  const [measuredTextShare, setMeasuredTextShare] = useState(null);
+
+  const wordCount = paragraphs
+    .join(" ")
+    .split(/\s+/)
+    .filter(Boolean).length;
+  const targetWords = bodyColumns === 2 ? 280 : 220;
+  const contentDensityBase = clamp((wordCount - targetWords) / 260, -1, 1);
+  const contentDensity = bodyColumns === 2 ? contentDensityBase * 0.82 : contentDensityBase;
+  const quoteWordCount = String(page.quote || "")
+    .split(/\s+/)
+    .filter(Boolean).length;
+  const fallbackTextShare = hasSecondaryCards
+    ? clamp((bodyWeight / 100) + contentDensity * 0.18, 0.2, showImageCard && showQuoteCard ? 0.78 : 0.88)
+    : 1;
+  const textShare = hasSecondaryCards
+    ? clamp(measuredTextShare ?? fallbackTextShare, 0.16, showImageCard && showQuoteCard ? 0.78 : 0.9)
+    : 1;
+
+  let textShareNorm = textShare;
+  let quoteShareNorm = 0;
+  let imageShareNorm = 0;
+
+  if (showImageCard && showQuoteCard) {
+    const remaining = Math.max(0.14, 1 - textShareNorm);
+    const quoteTarget = clamp(0.12 + quoteWordCount / 320, 0.11, 0.24);
+    const imageTarget = clamp(visualWeight / 100, 0.14, 0.72);
+    const targetTotal = quoteTarget + imageTarget;
+    quoteShareNorm = remaining * (quoteTarget / targetTotal);
+    imageShareNorm = remaining * (imageTarget / targetTotal);
+  } else if (showImageCard) {
+    imageShareNorm = Math.max(0.12, 1 - textShareNorm);
+  } else if (showQuoteCard) {
+    quoteShareNorm = Math.max(0.12, 1 - textShareNorm);
+  }
+
+  const totalShare = textShareNorm + quoteShareNorm + imageShareNorm;
+  if (totalShare > 0) {
+    textShareNorm /= totalShare;
+    quoteShareNorm /= totalShare;
+    imageShareNorm /= totalShare;
+  }
+
+  const quoteFlex = showQuoteCard ? Math.max(10, quoteShareNorm * 100) : 0;
+  const imageFlex = showImageCard ? Math.max(12, imageShareNorm * 100) : 0;
 
   const subject = String(page.subject || "").trim() || "Titre du sujet";
   const subhead = String(page.subhead || "").trim() || "Resume court de la news avec un angle editorial clair.";
+  const quoteText = String(page.quote || "").trim() || "Ajoute une citation cle pour renforcer l'angle de l'article.";
   const quoteAuthor = String(page.quoteAuthor || page.author || "Source").trim();
+  const visualImageUrl = String(page.articleImageUrl || page.imageUrl || "").trim();
   const contentBottomInset = bottomInset + 1.35;
+
+  useEffect(() => {
+    if (!hasSecondaryCards) {
+      setMeasuredTextShare(null);
+      return;
+    }
+
+    const stackElement = flowStackRef.current;
+    const textContentElement = textContentRef.current;
+    if (!stackElement || !textContentElement) {
+      return;
+    }
+
+    const updateMeasuredShare = () => {
+      const availableHeight = stackElement.clientHeight;
+      if (availableHeight <= 0) {
+        return;
+      }
+
+      const contentHeight = textContentElement.scrollHeight + 34;
+      const minShare = showImageCard && showQuoteCard ? 0.2 : 0.16;
+      const maxShare = showImageCard && showQuoteCard ? 0.78 : showImageCard ? 0.9 : 0.94;
+      const nextShare = clamp(contentHeight / availableHeight, minShare, maxShare);
+      setMeasuredTextShare((prev) => {
+        if (prev === null || Math.abs(prev - nextShare) > 0.012) {
+          return nextShare;
+        }
+
+        return prev;
+      });
+    };
+
+    const rafId = requestAnimationFrame(updateMeasuredShare);
+    let observer = null;
+    if (typeof ResizeObserver !== "undefined") {
+      observer = new ResizeObserver(updateMeasuredShare);
+      observer.observe(stackElement);
+      observer.observe(textContentElement);
+    } else {
+      window.addEventListener("resize", updateMeasuredShare);
+    }
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      if (observer) {
+        observer.disconnect();
+      } else {
+        window.removeEventListener("resize", updateMeasuredShare);
+      }
+    };
+  }, [hasSecondaryCards, showImageCard, showQuoteCard, bodyColumns, page.body]);
 
   return (
     <div data-frost-template="article" className="relative h-full w-full overflow-hidden" style={{ borderRadius: radius }}>
-      <BackgroundPhoto page={page} styleObj={styleObj} disableOverlays />
+      <BackgroundPhoto page={{ ...page, imageUrl: "" }} styleObj={styleObj} disableOverlays showPlaceholder={false} />
       {page.glow && <NeonBorder styleObj={styleObj} radius={radius} />}
       <SideDevice page={page} assets={project.assets} styleObj={styleObj} />
       {page.showVerticalBand !== false && bandWidth > 0 && (
@@ -77,17 +166,17 @@ export default function ArticleTemplate({ page, project }) {
         className="pointer-events-none absolute z-[10]"
         style={{
           left: `${leftOffset}%`,
-          right: `${panelRightInset}%`,
+          right: 0,
           top: `${topInset}%`,
           bottom: `${bottomInset}%`,
           overflow: "hidden",
           borderTopRightRadius: radius,
           borderBottomRightRadius: radius,
-          backdropFilter: "saturate(122%) brightness(1.02) contrast(1.01)",
+          backdropFilter: "saturate(118%) brightness(1.01) contrast(1.02)",
           backgroundImage:
-            "linear-gradient(180deg, rgba(8,18,36,0.22) 0%, rgba(7,15,32,0.18) 40%, rgba(4,10,24,0.3) 100%), repeating-linear-gradient(to bottom, rgba(160,246,255,0.1) 0px, rgba(160,246,255,0.1) 1px, rgba(9,22,38,0) 2px, rgba(9,22,38,0) 4px), radial-gradient(circle at 22% 18%, rgba(120,244,255,0.1) 0%, rgba(120,244,255,0) 40%), radial-gradient(circle at 86% 86%, rgba(121,101,255,0.08) 0%, rgba(121,101,255,0) 42%)",
-          backgroundSize: "100% 100%, 100% 8px, 100% 100%, 100% 100%",
-          backgroundPosition: "0 0, 0 0, 0 0, 0 0",
+            "linear-gradient(180deg, rgba(7,16,31,0.2) 0%, rgba(5,12,24,0.28) 56%, rgba(4,10,22,0.34) 100%), radial-gradient(circle at 18% 14%, rgba(120,244,255,0.1) 0%, rgba(120,244,255,0) 44%), radial-gradient(circle at 82% 82%, rgba(106,226,255,0.07) 0%, rgba(106,226,255,0) 46%)",
+          backgroundSize: "100% 100%, 100% 100%, 100% 100%",
+          backgroundPosition: "0 0, 0 0, 0 0",
           boxShadow: page.glow
             ? `inset 0 0 18px ${styleObj.blueGlow}24, 0 0 18px rgba(91,236,255,0.09)`
             : "inset 0 0 18px rgba(5,14,28,0.24)",
@@ -104,20 +193,6 @@ export default function ArticleTemplate({ page, project }) {
       />
 
       <div
-        className="absolute z-[14] rounded-[12px]"
-        style={{
-          left: `${leftOffset + 0.55}%`,
-          right: `${panelRightInset + 0.55}%`,
-          top: `${topInset + 0.65}%`,
-          bottom: `${bottomInset + 0.65}%`,
-          border: `1px solid ${styleObj.cyan}4a`,
-          boxShadow: page.glow
-            ? `0 0 18px ${styleObj.blueGlow}3a, inset 0 0 14px ${styleObj.blueGlow}22, inset 0 0 0 1px rgba(255,255,255,0.03)`
-            : `inset 0 0 0 1px ${styleObj.cyan}1f`,
-        }}
-      />
-
-      <div
         className="absolute z-20"
         style={{
           left: `${leftOffset + 1.2}%`,
@@ -127,64 +202,6 @@ export default function ArticleTemplate({ page, project }) {
         }}
       >
         <div className="flex h-full min-h-0 flex-col gap-[1.7%]">
-          <div
-            className="relative overflow-hidden rounded-[11px] border"
-            style={{
-              borderColor: `${styleObj.cyan}4f`,
-              background: "linear-gradient(92deg, rgba(4,13,24,0.84) 0%, rgba(8,22,40,0.68) 54%, rgba(18,10,35,0.55) 100%)",
-              boxShadow: page.glow ? `0 0 12px ${styleObj.blueGlow}30` : `inset 0 0 0 1px ${styleObj.cyan}16`,
-            }}
-          >
-            <div
-              className="pointer-events-none absolute inset-0 opacity-20"
-              style={{
-                background: `linear-gradient(90deg, transparent 0%, ${styleObj.cyan} 34%, transparent 78%)`,
-              }}
-            />
-            <div className="relative z-10 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-3 py-[1.8%]">
-              <div className="flex flex-wrap items-center gap-2">
-                <div
-                  className="font-frost-tech inline-flex items-center gap-1.5 rounded border px-2.5 py-[2px] text-[clamp(10px,1.04cqw,14px)] font-bold uppercase tracking-[0.1em]"
-                  style={{
-                    borderColor: `${styleObj.cyan}70`,
-                    color: styleObj.cyanSoft,
-                    background: "rgba(2,9,16,0.58)",
-                    fontFamily: styleObj.fontTech || "var(--font-tech)",
-                  }}
-                >
-                  <FileText className="h-3.5 w-3.5" /> {page.kicker}
-                </div>
-                <div
-                  className="font-frost-tech rounded border px-2.5 py-[2px] text-[clamp(10px,0.98cqw,14px)] uppercase tracking-[0.08em]"
-                  style={{
-                    borderColor: `${styleObj.cyan}56`,
-                    color: styleObj.cyan,
-                    background: "rgba(1,8,14,0.52)",
-                    fontFamily: styleObj.fontTech || "var(--font-tech)",
-                  }}
-                >
-                  {page.section}
-                </div>
-              </div>
-              {page.showTopMeta && (
-                <div
-                  className="font-frost-tech flex flex-wrap items-center gap-x-3 gap-y-1 text-[clamp(10px,0.98cqw,14px)] uppercase"
-                  style={{ color: `${styleObj.cyanSoft}e5`, fontFamily: styleObj.fontTech || "var(--font-tech)" }}
-                >
-                  <span className="inline-flex items-center gap-1">
-                    <CalendarDays className="h-3.5 w-3.5" /> {page.date}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <UserRound className="h-3.5 w-3.5" /> {page.author}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <Clock3 className="h-3.5 w-3.5" /> {readingMinutes} min
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-
           <div
             className="relative overflow-hidden rounded-[14px] border px-[2.25%] pb-[2.2%] pt-[2%]"
             style={{
@@ -208,19 +225,6 @@ export default function ArticleTemplate({ page, project }) {
               }}
             />
             <div className="relative z-10">
-              <div className="font-frost-tech mb-1 inline-flex items-center gap-2 uppercase tracking-[0.09em]" style={{ color: styleObj.cyanSoft, fontFamily: styleObj.fontTech || "var(--font-tech)", fontSize: `clamp(11px, ${cq(1.18)}, 16px)` }}>
-                <span
-                  className="rounded border px-2 py-[1px]"
-                  style={{
-                    borderColor: `${styleObj.cyan}62`,
-                    background: "rgba(2,9,16,0.58)",
-                    color: styleObj.cyan,
-                  }}
-                >
-                  {page.issue}
-                </span>
-                dossier editorial
-              </div>
               <h1
                 className="font-frost-display font-black uppercase leading-[0.9]"
                 style={{
@@ -246,190 +250,177 @@ export default function ArticleTemplate({ page, project }) {
             </div>
           </div>
 
-          <div
-            className="grid min-h-0 flex-1 gap-[1.8%]"
-            style={{
-              gridTemplateColumns: showSideColumn ? `minmax(0, ${textWidth}%) minmax(0, 1fr)` : "1fr",
-            }}
-          >
+          <div ref={flowStackRef} className="flex min-h-0 flex-1 flex-col gap-[1.8%]">
             <div
-              className="flex min-h-0 flex-col overflow-hidden rounded-[14px] border"
+              className="frost-export-hide-scroll min-h-0 overflow-auto rounded-[14px] border px-4 pb-4 pt-4"
               style={{
+                flexGrow: hasSecondaryCards ? 0 : 1,
+                flexShrink: hasSecondaryCards ? 1 : 0,
+                flexBasis: hasSecondaryCards ? "auto" : 0,
+                maxHeight: hasSecondaryCards ? `${Math.max(20, textShareNorm * 100)}%` : undefined,
                 borderColor: `${styleObj.cyan}42`,
                 background: "rgba(4,12,22,0.76)",
                 boxShadow: `inset 0 0 0 1px ${styleObj.cyan}20`,
               }}
             >
               <div
-                className="font-frost-tech flex items-center justify-between border-b px-3 py-2 uppercase"
+                ref={textContentRef}
+                className="font-frost-ui leading-[1.72]"
                 style={{
-                  borderColor: `${styleObj.cyan}30`,
-                  color: styleObj.cyanSoft,
-                  fontFamily: styleObj.fontTech || "var(--font-tech)",
-                  fontSize: `clamp(13px, ${cq(1.44)}, 21px)`,
+                  color: "#EAF8FF",
+                  fontFamily: styleObj.fontUi || "var(--font-ui)",
+                  fontSize: `clamp(15px, ${cq(1.7)}, 26px)`,
+                  columnCount: bodyColumns,
+                  columnGap: bodyColumns > 1 ? "1.65em" : undefined,
                 }}
               >
-                <span className="tracking-[0.11em]">Flux principal</span>
-                <span className="opacity-90">
-                  {page.issue} / {page.date} / {bodyColumns} col
-                </span>
-              </div>
-              <div className="min-h-0 flex-1 overflow-auto px-4 pb-4 pt-3.5">
-                <div
-                  className="font-frost-ui leading-[1.72]"
-                  style={{
-                    color: "#EAF8FF",
-                    fontFamily: styleObj.fontUi || "var(--font-ui)",
-                    fontSize: `clamp(15px, ${cq(1.7)}, 26px)`,
-                    columnCount: bodyColumns,
-                    columnGap: bodyColumns > 1 ? "1.65em" : undefined,
-                  }}
-                >
-                  {paragraphs.map((paragraph, index) => (
-                    <p key={`${paragraph.slice(0, 16)}-${index}`} className="mb-[0.9em] break-inside-avoid">
-                      {index === 0 ? (
-                        <>
-                          <span
-                            className="font-frost-display mr-1 inline-block align-top leading-[0.78]"
-                            style={{
-                              color: styleObj.cyanSoft,
-                              fontFamily: styleObj.fontDisplay || "var(--font-display)",
-                              fontSize: `clamp(30px, ${cq(3.2)}, 52px)`,
-                            }}
-                          >
-                            {paragraph.slice(0, 1)}
-                          </span>
-                          {paragraph.slice(1)}
-                        </>
-                      ) : (
-                        paragraph
-                      )}
-                    </p>
-                  ))}
-                </div>
+                {paragraphs.map((paragraph, index) => (
+                  <p key={`${paragraph.slice(0, 16)}-${index}`} className="mb-[0.9em] break-inside-avoid">
+                    {index === 0 ? (
+                      <>
+                        <span
+                          className="font-frost-display mr-1 inline-block align-top leading-[0.78]"
+                          style={{
+                            color: styleObj.cyanSoft,
+                            fontFamily: styleObj.fontDisplay || "var(--font-display)",
+                            fontSize: `clamp(30px, ${cq(3.2)}, 52px)`,
+                          }}
+                        >
+                          {paragraph.slice(0, 1)}
+                        </span>
+                        {paragraph.slice(1)}
+                      </>
+                    ) : (
+                      paragraph
+                    )}
+                  </p>
+                ))}
               </div>
             </div>
 
-            {showSideColumn && (
-              <div className="flex min-h-0 flex-col gap-[2%]">
-                {showQuoteCard && (
-                  <div
-                    className={`${hasSplitSide ? "shrink-0" : "flex-1"} relative overflow-hidden rounded-[14px] border px-3 py-3`}
-                    style={{
-                      height: hasSplitSide ? `${splitQuoteHeight}%` : undefined,
-                      borderColor: `${styleObj.cyan}5f`,
-                      background: "linear-gradient(160deg, rgba(7,20,36,0.9) 0%, rgba(3,10,18,0.86) 55%, rgba(11,34,59,0.8) 100%)",
-                      boxShadow: page.glow ? `0 0 14px ${styleObj.blueGlow}2f inset` : `inset 0 0 0 1px ${styleObj.cyan}25`,
-                    }}
+            {showQuoteCard && (
+              <div
+                className="relative overflow-hidden rounded-[14px] border px-[2.2%] py-[1.7%]"
+                style={{
+                  flexGrow: quoteFlex,
+                  flexBasis: showImageCard ? 0 : undefined,
+                  borderColor: `${styleObj.cyan}5f`,
+                  background: "linear-gradient(160deg, rgba(7,20,36,0.9) 0%, rgba(3,10,18,0.86) 55%, rgba(11,34,59,0.8) 100%)",
+                  boxShadow: page.glow ? `0 0 14px ${styleObj.blueGlow}2f inset` : `inset 0 0 0 1px ${styleObj.cyan}25`,
+                }}
+              >
+                <div
+                  className="pointer-events-none absolute right-2 top-[-8px] text-[clamp(34px,4.4cqw,64px)] font-black leading-none"
+                  style={{ color: `${styleObj.cyan}2e`, fontFamily: styleObj.fontDisplay || "var(--font-display)" }}
+                >
+                  "
+                </div>
+                <div className="frost-export-hide-scroll relative z-10 min-h-0 max-h-full overflow-auto pr-1">
+                  <div className="flex items-start gap-2.5">
+                    <div
+                      className="mt-[2px] inline-flex shrink-0 items-center rounded border px-2 py-1"
+                      style={{
+                        borderColor: `${styleObj.cyan}5d`,
+                        color: styleObj.cyanSoft,
+                        background: "rgba(1,8,16,0.45)",
+                      }}
                     >
+                      <Quote className="h-3.5 w-3.5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
                       <div
-                        className="pointer-events-none absolute right-2 top-[-8px] text-[clamp(40px,4.8cqw,72px)] font-black leading-none"
-                        style={{ color: `${styleObj.cyan}33`, fontFamily: styleObj.fontDisplay || "var(--font-display)" }}
+                        className="font-frost-tech mb-1 text-[clamp(10px,1.04cqw,14px)] tracking-[0.1em]"
+                        style={{ color: styleObj.cyanSoft, fontFamily: styleObj.fontTech || "var(--font-tech)" }}
                       >
-                      "
-                    </div>
-                    <div
-                      className="font-frost-tech mb-2 inline-flex items-center gap-1 text-[clamp(11px,1.1cqw,15px)] uppercase tracking-[0.1em]"
-                      style={{ color: styleObj.cyanSoft, fontFamily: styleObj.fontTech || "var(--font-tech)" }}
-                    >
-                      <Quote className="h-3.5 w-3.5" /> Citation
-                    </div>
-                    <div
-                      className="font-frost-tech text-[clamp(17px,1.95cqw,30px)] leading-[1.28]"
-                      style={{
-                        color: styleObj.cyanSoft,
-                        fontFamily: styleObj.fontTech || "var(--font-tech)",
-                        textShadow: page.glow ? `0 0 10px ${styleObj.blueGlow}40` : "none",
-                      }}
-                    >
-                      {page.quote}
-                    </div>
-                    <div
-                      className="font-frost-tech mt-3 inline-flex rounded border px-2 py-1 text-[clamp(11px,1.02cqw,14px)] uppercase"
-                      style={{
-                        color: `${styleObj.cyanSoft}e8`,
-                        borderColor: `${styleObj.cyan}55`,
-                        background: "rgba(0,0,0,0.35)",
-                        fontFamily: styleObj.fontTech || "var(--font-tech)",
-                      }}
-                    >
-                      {quoteAuthor}
-                    </div>
-                  </div>
-                )}
-
-                {showImageCard && (
-                  <div
-                    className={`relative overflow-hidden rounded-[14px] border ${hasSplitSide ? "shrink-0" : "flex-1"}`}
-                    style={{
-                      height: hasSplitSide ? `${splitImageHeight}%` : undefined,
-                      borderColor: `${styleObj.cyan}42`,
-                      background: "rgba(3,10,19,0.85)",
-                    }}
-                    >
-                    {page.imageUrl ? (
-                      <>
-                        <img
-                          src={page.imageUrl}
-                          alt="illustration article"
-                          className="h-full w-full object-cover"
-                          style={{
-                            objectFit: page.imageFit || "cover",
-                            objectPosition: `${page.imageX ?? 50}% ${page.imageY ?? 50}%`,
-                            transform: `scale(${page.imageScale || 1})`,
-                            filter: "contrast(1.05) saturate(1.14) brightness(0.84) hue-rotate(6deg)",
-                          }}
-                        />
-                        <div
-                          className="pointer-events-none absolute inset-0"
-                          style={{
-                            background:
-                              "linear-gradient(160deg, rgba(140,228,243,0.42) 0%, rgba(17,63,102,0.12) 44%, rgba(255,95,191,0.26) 100%)",
-                            opacity: 0.28,
-                          }}
-                        />
-                        <div
-                          className="pointer-events-none absolute inset-0"
-                          style={{
-                            background:
-                              "linear-gradient(194deg, rgba(2,8,16,0.82) 6%, rgba(4,13,24,0.42) 46%, rgba(1,6,12,0.8) 100%)",
-                            opacity: 0.24,
-                          }}
-                        />
-                      </>
-                    ) : (
-                      <div className="absolute inset-0 grid place-items-center text-cyan-100/35">
-                        <div className="text-center">
-                          <ImageIcon className="mx-auto h-7 w-7" />
-                          <div className="mt-1 text-[11px]">Ajoute une image</div>
-                        </div>
+                        Citation
                       </div>
-                    )}
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/5 via-transparent to-black/45" />
-                    <div
-                      className="font-frost-tech absolute bottom-2 left-2 rounded border px-2 py-1 text-[clamp(10px,0.98cqw,14px)] uppercase"
-                      style={{
-                        borderColor: `${styleObj.cyan}5f`,
-                        color: styleObj.cyanSoft,
-                        background: "rgba(0,0,0,0.5)",
-                        fontFamily: styleObj.fontTech || "var(--font-tech)",
-                      }}
-                    >
-                      Zone visuelle
+                      <div
+                        className="font-frost-ui text-[clamp(14px,1.45cqw,22px)] leading-[1.35]"
+                        style={{
+                          color: "#DDF4FF",
+                          fontFamily: styleObj.fontUi || "var(--font-ui)",
+                          textShadow: page.glow ? `0 0 10px ${styleObj.blueGlow}30` : "none",
+                        }}
+                      >
+                        {quoteText}
+                      </div>
+                      <div
+                        className="font-frost-tech mt-2 inline-flex rounded border px-2 py-1 text-[clamp(10px,0.95cqw,13px)] uppercase"
+                        style={{
+                          color: `${styleObj.cyanSoft}e8`,
+                          borderColor: `${styleObj.cyan}55`,
+                          background: "rgba(0,0,0,0.35)",
+                          fontFamily: styleObj.fontTech || "var(--font-tech)",
+                        }}
+                      >
+                        {quoteAuthor}
+                      </div>
                     </div>
-                    <div
-                      className="font-frost-tech absolute bottom-2 right-2 rounded border px-2 py-[2px] text-[clamp(10px,0.94cqw,13px)] uppercase"
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {showImageCard && (
+              <div
+                className="relative min-h-0 overflow-hidden rounded-[14px] border"
+                style={{
+                  flexGrow: imageFlex,
+                  flexBasis: 0,
+                  borderColor: `${styleObj.cyan}42`,
+                  background: "rgba(3,10,19,0.85)",
+                }}
+              >
+                {visualImageUrl ? (
+                  <>
+                    <img
+                      src={visualImageUrl}
+                      alt="illustration article"
+                      className="h-full w-full object-cover"
                       style={{
-                        borderColor: `${styleObj.cyan}45`,
-                        color: `${styleObj.cyanSoft}d9`,
-                        background: "rgba(2,8,15,0.55)",
-                        fontFamily: styleObj.fontTech || "var(--font-tech)",
+                        objectFit: page.imageFit || "cover",
+                        objectPosition: `${page.imageX ?? 50}% ${page.imageY ?? 50}%`,
+                        transform: `scale(${page.imageScale || 1})`,
+                        filter: "contrast(1.05) saturate(1.14) brightness(0.84) hue-rotate(6deg)",
                       }}
-                    >
-                      live frame
+                    />
+                    <div
+                      className="pointer-events-none absolute inset-0"
+                      style={{
+                        background:
+                          "linear-gradient(160deg, rgba(140,228,243,0.42) 0%, rgba(17,63,102,0.12) 44%, rgba(255,95,191,0.26) 100%)",
+                        opacity: 0.28,
+                      }}
+                    />
+                    <div
+                      className="pointer-events-none absolute inset-0"
+                      style={{
+                        background:
+                          "linear-gradient(194deg, rgba(2,8,16,0.82) 6%, rgba(4,13,24,0.42) 46%, rgba(1,6,12,0.8) 100%)",
+                        opacity: 0.24,
+                      }}
+                    />
+                  </>
+                ) : (
+                  <div className="absolute inset-0 grid place-items-center text-cyan-100/35">
+                    <div className="text-center">
+                      <ImageIcon className="mx-auto h-7 w-7" />
+                      <div className="mt-1 text-[11px]">Ajoute une image</div>
                     </div>
                   </div>
                 )}
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/5 via-transparent to-black/45" />
+                <div
+                  className="font-frost-tech absolute bottom-2 left-2 rounded border px-2 py-1 text-[clamp(10px,0.98cqw,14px)] uppercase"
+                  style={{
+                    borderColor: `${styleObj.cyan}5f`,
+                    color: styleObj.cyanSoft,
+                    background: "rgba(0,0,0,0.5)",
+                    fontFamily: styleObj.fontTech || "var(--font-tech)",
+                  }}
+                >
+                  Zone visuelle
+                </div>
               </div>
             )}
           </div>

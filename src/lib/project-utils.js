@@ -55,6 +55,12 @@ export function hydrateProject(rawProject) {
   const hasAtLeastOneAsset = Object.values(incomingAssets).some(
     (value) => typeof value === "string" && value.trim() !== ""
   );
+  const legacyArticleSubject = "Les drones civils passent en mode veille tactique";
+  const legacyArticleSubhead = "Le protocole de nuit est entre en phase active apres trois semaines de tests en zone dense.";
+  const legacyArticleBodyPrefix = "A 03h12, les premiers drones de patrouille ont recu la mise a jour tactique";
+  const legacyArticleQuote = '"On a gagne en vitesse, pas encore en lisibilite operationnelle."';
+  const legacyArticleAuthor = "Redaction Frost News";
+  const legacyArticleQuoteAuthor = "Commandant R. Vega";
 
   return {
     ...fallback,
@@ -71,8 +77,21 @@ export function hydrateProject(rawProject) {
         page.showTicker === false &&
         (page.leftBandWidth === 0 || page.leftBandWidth === undefined) &&
         (page.sideDeviceWidth === 0 || page.sideDeviceWidth === undefined);
+      const looksLikeLegacyArticleMeta =
+        page.template === "article" &&
+        page.kicker === "ENQUETE" &&
+        page.section === "SECURITE URBAINE" &&
+        page.date === "FEVRIER 2035" &&
+        page.author === legacyArticleAuthor;
+      const looksLikeLegacyAdDeviceConfig =
+        page.template === "ad" &&
+        (page.showDevice === false || page.showDevice === undefined) &&
+        (page.sideDeviceWidth === 8 || page.sideDeviceWidth === undefined) &&
+        (page.leftBandWidth === 14 || page.leftBandWidth === undefined) &&
+        (page.journalRightInset === 0 || page.journalRightInset === undefined) &&
+        (page.logoStripScale === 0.5 || page.logoStripScale === undefined);
 
-      return {
+      const hydratedPage = {
         ...deepCopy(preset),
         ...page,
         id: page.id || uid(),
@@ -92,6 +111,35 @@ export function hydrateProject(rawProject) {
             : page.showVerticalBand,
         showHeadline: page.showHeadline === undefined ? (page.template === "cover") : page.showHeadline,
         showTicker: page.showTicker === undefined ? (page.template === "cover") : page.showTicker,
+      };
+      const normalizedPage = looksLikeLegacyAdDeviceConfig
+        ? {
+            ...hydratedPage,
+            leftBandWidth: preset.leftBandWidth,
+            sideDeviceWidth: preset.sideDeviceWidth,
+            showDevice: preset.showDevice,
+            journalRightInset: preset.journalRightInset,
+            logoStripScale: preset.logoStripScale,
+          }
+        : hydratedPage;
+
+      if (!looksLikeLegacyArticleMeta) {
+        return normalizedPage;
+      }
+
+      return {
+        ...normalizedPage,
+        kicker: preset.kicker,
+        issue: preset.issue,
+        date: preset.date,
+        section: preset.section,
+        author: preset.author,
+        showTopMeta: preset.showTopMeta,
+        subject: page.subject === legacyArticleSubject ? preset.subject : normalizedPage.subject,
+        subhead: page.subhead === legacyArticleSubhead ? preset.subhead : normalizedPage.subhead,
+        body: String(page.body || "").startsWith(legacyArticleBodyPrefix) ? preset.body : normalizedPage.body,
+        quote: page.quote === legacyArticleQuote ? preset.quote : normalizedPage.quote,
+        quoteAuthor: page.quoteAuthor === legacyArticleQuoteAuthor ? preset.quoteAuthor : normalizedPage.quoteAuthor,
       };
     }),
   };

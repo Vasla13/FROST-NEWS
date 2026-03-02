@@ -2,7 +2,7 @@ import { Image as ImageIcon } from "lucide-react";
 
 import { clamp } from "../../lib/project-utils";
 
-export default function BackgroundPhoto({ page, styleObj, disableOverlays = false }) {
+export default function BackgroundPhoto({ page, styleObj, disableOverlays = false, showPlaceholder = true }) {
   const backgroundStyle =
     page.bgMode === "solid"
       ? { background: page.bgColor || styleObj.dark }
@@ -49,14 +49,14 @@ export default function BackgroundPhoto({ page, styleObj, disableOverlays = fals
             }}
           />
         </>
-      ) : (
+      ) : showPlaceholder ? (
         <div className="absolute inset-0 grid place-items-center text-center text-cyan-100/40">
           <div className="space-y-1">
             <ImageIcon className="mx-auto h-10 w-10" />
             <p className="text-xs">Upload une image pour cette page</p>
           </div>
         </div>
-      )}
+      ) : null}
       {page.template === "cover" && !disableOverlays && (
         <div
           className="pointer-events-none absolute inset-0"

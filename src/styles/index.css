@@ -240,3 +240,15 @@ body {
 [data-frost-export-mode="1"] .cover-crt-layer::after {
   opacity: 0.55;
 }
+
+/* Hide navigation scrollbars while keeping scroll behavior available. */
+.frost-export-hide-scroll {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.frost-export-hide-scroll::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+}
