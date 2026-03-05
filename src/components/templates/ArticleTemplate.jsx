@@ -410,17 +410,6 @@ export default function ArticleTemplate({ page, project }) {
                   </div>
                 )}
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/5 via-transparent to-black/45" />
-                <div
-                  className="font-frost-tech absolute bottom-2 left-2 rounded border px-2 py-1 text-[clamp(10px,0.98cqw,14px)] uppercase"
-                  style={{
-                    borderColor: `${styleObj.cyan}5f`,
-                    color: styleObj.cyanSoft,
-                    background: "rgba(0,0,0,0.5)",
-                    fontFamily: styleObj.fontTech || "var(--font-tech)",
-                  }}
-                >
-                  Zone visuelle
-                </div>
               </div>
             )}
           </div>

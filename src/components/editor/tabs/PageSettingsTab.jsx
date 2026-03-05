@@ -15,6 +15,7 @@ import Toggle from "../../ui/Toggle";
 export default function PageSettingsTab({ selectedPage, setPage, uploadPageImage }) {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const isArticleTemplate = selectedPage.template === "article";
+  const isAdTemplate = selectedPage.template === "ad";
 
   const setVisualImage = (url, patch = {}) => {
     if (isArticleTemplate) {
@@ -88,26 +89,13 @@ export default function PageSettingsTab({ selectedPage, setPage, uploadPageImage
     });
   };
 
-  const applyAdPreset = () => {
-    setPage({
-      ...PAGE_PRESETS.ad,
-      name: selectedPage.name || PAGE_PRESETS.ad.name,
-      adLayoutMode: selectedPage.adLayoutMode || PAGE_PRESETS.ad.adLayoutMode || "image-dominant",
-      imageUrl: selectedPage.imageUrl || PAGE_PRESETS.ad.imageUrl,
-      imageFit: selectedPage.imageFit || PAGE_PRESETS.ad.imageFit,
-      imageScale: selectedPage.imageScale ?? PAGE_PRESETS.ad.imageScale,
-      imageX: selectedPage.imageX ?? PAGE_PRESETS.ad.imageX,
-      imageY: selectedPage.imageY ?? PAGE_PRESETS.ad.imageY,
-    });
-  };
-
   return (
     <div className="space-y-4">
       <Field label="Nom de page">
         <Input value={selectedPage.name || ""} onChange={(event) => setPage({ name: event.target.value })} />
       </Field>
 
-      <div className="grid grid-cols-2 gap-3">
+      {isAdTemplate ? (
         <Field label="Template">
           <Select value={selectedPage.template} onChange={(event) => applyTemplate(event.target.value)}>
             <option value="cover">Cover</option>
@@ -115,14 +103,25 @@ export default function PageSettingsTab({ selectedPage, setPage, uploadPageImage
             <option value="ad">Pub</option>
           </Select>
         </Field>
-        <Field label="Kicker / Rubrique">
-          <Input value={selectedPage.kicker || ""} onChange={(event) => setPage({ kicker: event.target.value })} />
-        </Field>
-      </div>
-
-      <Field label="Titre principal">
-        <TextArea rows={2} value={selectedPage.subject || ""} onChange={(event) => setPage({ subject: event.target.value })} />
-      </Field>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Template">
+              <Select value={selectedPage.template} onChange={(event) => applyTemplate(event.target.value)}>
+                <option value="cover">Cover</option>
+                <option value="article">Article</option>
+                <option value="ad">Pub</option>
+              </Select>
+            </Field>
+            <Field label="Kicker / Rubrique">
+              <Input value={selectedPage.kicker || ""} onChange={(event) => setPage({ kicker: event.target.value })} />
+            </Field>
+          </div>
+          <Field label="Titre principal">
+            <TextArea rows={2} value={selectedPage.subject || ""} onChange={(event) => setPage({ subject: event.target.value })} />
+          </Field>
+        </>
+      )}
 
       {selectedPage.template === "cover" && (
         <div className="space-y-3 rounded-2xl border border-cyan-400/10 bg-slate-900/60 p-3">
@@ -201,34 +200,17 @@ export default function PageSettingsTab({ selectedPage, setPage, uploadPageImage
         </>
       )}
 
-      {selectedPage.template === "ad" && (
-        <>
-          <div className="space-y-3 rounded-2xl border border-cyan-400/10 bg-slate-900/60 p-3">
-            <div className="text-xs font-bold tracking-wide text-cyan-100/90">Reglages pub</div>
-            <Field label="Mise en page pub">
-              <Select value={selectedPage.adLayoutMode || "image-dominant"} onChange={(event) => setPage({ adLayoutMode: event.target.value })}>
-                <option value="image-dominant">Visuel dominant</option>
-                <option value="text-image">Texte + visuel</option>
-              </Select>
-            </Field>
-            <button
-              onClick={applyAdPreset}
-              className="w-full rounded-xl border border-cyan-300/30 bg-cyan-300/10 px-3 py-2 text-xs text-cyan-100 hover:border-cyan-300/50"
-            >
-              Appliquer preset pub premium
-            </button>
-          </div>
-          <Field label="CTA">
-            <Input value={selectedPage.cta || ""} onChange={(event) => setPage({ cta: event.target.value })} />
-          </Field>
-          <Field label="Texte pub">
-            <TextArea rows={5} value={selectedPage.body || ""} onChange={(event) => setPage({ body: event.target.value })} />
-          </Field>
-        </>
-      )}
-
       <div className="space-y-3 rounded-2xl border border-cyan-400/10 bg-slate-900/60 p-3">
         <div className="text-xs font-bold tracking-wide text-cyan-100/90">Visuel de page</div>
+        {selectedPage.template === "article" && (
+          <div className="flex flex-wrap gap-2">
+            <Toggle
+              checked={selectedPage.articleShowImageCard !== false}
+              onChange={(value) => setPage({ articleShowImageCard: value })}
+              label="Afficher le visuel (article)"
+            />
+          </div>
+        )}
         <div className="flex items-center gap-2">
           <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-cyan-400/20 bg-slate-900/70 px-3 py-2 text-xs text-cyan-100 hover:border-cyan-300/40">
             <Upload className="h-3.5 w-3.5" /> Upload image
@@ -291,114 +273,130 @@ export default function PageSettingsTab({ selectedPage, setPage, uploadPageImage
               <Slider min={0} max={100} value={selectedPage.imageY ?? 50} onChange={(value) => setPage({ imageY: value })} />
             </Field>
 
-            <Field label="Opacite photo">
-              <Slider
-                min={0.2}
-                max={1}
-                step={0.01}
-                value={selectedPage.opacityPhoto ?? 1}
-                onChange={(value) => setPage({ opacityPhoto: value })}
-              />
-            </Field>
-
-            <Field label="Largeur bande gauche (%)">
-              <Slider min={0} max={28} value={selectedPage.leftBandWidth || 0} onChange={(value) => setPage({ leftBandWidth: value })} />
-            </Field>
-            <Field label="Largeur device (%)">
-              <Slider min={0} max={18} value={selectedPage.sideDeviceWidth || 0} onChange={(value) => setPage({ sideDeviceWidth: value })} />
-            </Field>
-
-            {(selectedPage.template === "cover" || selectedPage.template === "article") && (
+            {!isAdTemplate && (
               <>
-                <Field label="Decalage haut journal (%)">
-                  <Slider min={0} max={12} step={0.1} value={selectedPage.journalTopInset ?? 0} onChange={(value) => setPage({ journalTopInset: value })} />
+                <Field label="Opacite photo">
+                  <Slider
+                    min={0.2}
+                    max={1}
+                    step={0.01}
+                    value={selectedPage.opacityPhoto ?? 1}
+                    onChange={(value) => setPage({ opacityPhoto: value })}
+                  />
                 </Field>
-                <Field label="Decalage bas journal (%)">
-                  <Slider min={0} max={12} step={0.1} value={selectedPage.journalBottomInset ?? 0} onChange={(value) => setPage({ journalBottomInset: value })} />
+
+                <Field label="Largeur bande gauche (%)">
+                  <Slider min={0} max={28} value={selectedPage.leftBandWidth || 0} onChange={(value) => setPage({ leftBandWidth: value })} />
                 </Field>
-                <Field label="Marge droite journal (%)">
-                  <Slider min={0} max={10} step={0.1} value={selectedPage.journalRightInset ?? 0} onChange={(value) => setPage({ journalRightInset: value })} />
+                <Field label="Largeur device (%)">
+                  <Slider min={0} max={18} value={selectedPage.sideDeviceWidth || 0} onChange={(value) => setPage({ sideDeviceWidth: value })} />
                 </Field>
-                <Field label="Scale logo bande">
-                  <Slider min={0.3} max={0.9} step={0.01} value={selectedPage.logoStripScale ?? 0.5} onChange={(value) => setPage({ logoStripScale: value })} />
-                </Field>
+                {(selectedPage.template === "cover" || selectedPage.template === "article") && (
+                  <>
+                    <Field label="Decalage haut journal (%)">
+                      <Slider
+                        min={0}
+                        max={12}
+                        step={0.1}
+                        value={selectedPage.journalTopInset ?? 0}
+                        onChange={(value) => setPage({ journalTopInset: value })}
+                      />
+                    </Field>
+                    <Field label="Decalage bas journal (%)">
+                      <Slider
+                        min={0}
+                        max={12}
+                        step={0.1}
+                        value={selectedPage.journalBottomInset ?? 0}
+                        onChange={(value) => setPage({ journalBottomInset: value })}
+                      />
+                    </Field>
+                    <Field label="Marge droite journal (%)">
+                      <Slider
+                        min={0}
+                        max={10}
+                        step={0.1}
+                        value={selectedPage.journalRightInset ?? 0}
+                        onChange={(value) => setPage({ journalRightInset: value })}
+                      />
+                    </Field>
+                    <Field label="Scale logo bande">
+                      <Slider min={0.3} max={0.9} step={0.01} value={selectedPage.logoStripScale ?? 0.5} onChange={(value) => setPage({ logoStripScale: value })} />
+                    </Field>
+                  </>
+                )}
+
+                {selectedPage.template === "article" && (
+                  <>
+                    <Field label="Poids texte haut (%)">
+                      <Slider min={45} max={90} step={1} value={selectedPage.articleTextWidth ?? 68} onChange={(value) => setPage({ articleTextWidth: value })} />
+                    </Field>
+                    <Field label="Poids visuel bas (%)">
+                      <Slider min={18} max={60} step={1} value={selectedPage.articleHeroHeight ?? 30} onChange={(value) => setPage({ articleHeroHeight: value })} />
+                    </Field>
+                    <Field label="Taille titre article">
+                      <Slider min={2.8} max={7.2} step={0.1} value={selectedPage.articleTitleSize ?? 5.8} onChange={(value) => setPage({ articleTitleSize: value })} />
+                    </Field>
+                    <Field label="Colonnes corps texte">
+                      <Select value={String(selectedPage.articleBodyColumns ?? 1)} onChange={(event) => setPage({ articleBodyColumns: Number(event.target.value) })}>
+                        <option value="1">1 colonne</option>
+                        <option value="2">2 colonnes</option>
+                      </Select>
+                    </Field>
+                  </>
+                )}
+
+                {selectedPage.template === "cover" && (
+                  <>
+                    <Field label="Y barre titre">
+                      <Slider min={45} max={82} value={selectedPage.headlineBarY || 67} onChange={(value) => setPage({ headlineBarY: value })} />
+                    </Field>
+                    <Field label="Hauteur barre titre">
+                      <Slider min={6} max={18} value={selectedPage.headlineBarH || 10} onChange={(value) => setPage({ headlineBarH: value })} />
+                    </Field>
+                    <Field label="Taille titre">
+                      <Slider min={2.5} max={7} step={0.1} value={selectedPage.headlineFont || 5.1} onChange={(value) => setPage({ headlineFont: value })} />
+                    </Field>
+                    <Field label="Hauteur ticker">
+                      <Slider min={2.4} max={5.2} step={0.1} value={selectedPage.tickerHeight ?? 4.2} onChange={(value) => setPage({ tickerHeight: value })} />
+                    </Field>
+                  </>
+                )}
+
+                <div className="flex flex-wrap gap-2">
+                  <Toggle checked={!!selectedPage.showDevice} onChange={(value) => setPage({ showDevice: value })} label="Device" />
+                  <Toggle checked={!!selectedPage.showVerticalBand} onChange={(value) => setPage({ showVerticalBand: value })} label="Bande" />
+                  <Toggle checked={!!selectedPage.showTopMeta} onChange={(value) => setPage({ showTopMeta: value })} label="Meta" />
+                  <Toggle checked={!!selectedPage.showCorners} onChange={(value) => setPage({ showCorners: value })} label="Corners" />
+                  <Toggle checked={!!selectedPage.glow} onChange={(value) => setPage({ glow: value })} label="Glow" />
+                  <Toggle checked={!!selectedPage.grain} onChange={(value) => setPage({ grain: value })} label="Grain" />
+                  <Toggle checked={!!selectedPage.showScanlines} onChange={(value) => setPage({ showScanlines: value })} label="Scanlines" />
+                  {selectedPage.template === "cover" && (
+                    <>
+                      <Toggle checked={!!selectedPage.showHeadline} onChange={(value) => setPage({ showHeadline: value })} label="Titre barre" />
+                      <Toggle checked={!!selectedPage.showTicker} onChange={(value) => setPage({ showTicker: value })} label="Ticker" />
+                    </>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Fond page">
+                    <Select value={selectedPage.bgMode || "solid"} onChange={(event) => setPage({ bgMode: event.target.value })}>
+                      <option value="solid">solid</option>
+                      <option value="gradient">gradient</option>
+                    </Select>
+                  </Field>
+                  <Field label="Couleur fond">
+                    <input
+                      type="color"
+                      value={selectedPage.bgColor || "#0B121A"}
+                      onChange={(event) => setPage({ bgColor: event.target.value })}
+                      className="h-10 w-full rounded-xl border border-cyan-400/20 bg-transparent p-1"
+                    />
+                  </Field>
+                </div>
               </>
             )}
-
-            {selectedPage.template === "article" && (
-              <>
-                <Field label="Poids texte haut (%)">
-                  <Slider min={45} max={90} step={1} value={selectedPage.articleTextWidth ?? 68} onChange={(value) => setPage({ articleTextWidth: value })} />
-                </Field>
-                <Field label="Poids visuel bas (%)">
-                  <Slider min={18} max={60} step={1} value={selectedPage.articleHeroHeight ?? 30} onChange={(value) => setPage({ articleHeroHeight: value })} />
-                </Field>
-                <Field label="Taille titre article">
-                  <Slider min={2.8} max={7.2} step={0.1} value={selectedPage.articleTitleSize ?? 5.8} onChange={(value) => setPage({ articleTitleSize: value })} />
-                </Field>
-                <Field label="Colonnes corps texte">
-                  <Select value={String(selectedPage.articleBodyColumns ?? 1)} onChange={(event) => setPage({ articleBodyColumns: Number(event.target.value) })}>
-                    <option value="1">1 colonne</option>
-                    <option value="2">2 colonnes</option>
-                  </Select>
-                </Field>
-              </>
-            )}
-
-            {selectedPage.template === "cover" && (
-              <>
-                <Field label="Y barre titre">
-                  <Slider min={45} max={82} value={selectedPage.headlineBarY || 67} onChange={(value) => setPage({ headlineBarY: value })} />
-                </Field>
-                <Field label="Hauteur barre titre">
-                  <Slider min={6} max={18} value={selectedPage.headlineBarH || 10} onChange={(value) => setPage({ headlineBarH: value })} />
-                </Field>
-                <Field label="Taille titre">
-                  <Slider min={2.5} max={7} step={0.1} value={selectedPage.headlineFont || 5.1} onChange={(value) => setPage({ headlineFont: value })} />
-                </Field>
-                <Field label="Hauteur ticker">
-                  <Slider min={2.4} max={5.2} step={0.1} value={selectedPage.tickerHeight ?? 4.2} onChange={(value) => setPage({ tickerHeight: value })} />
-                </Field>
-              </>
-            )}
-
-            <div className="flex flex-wrap gap-2">
-              <Toggle checked={!!selectedPage.showDevice} onChange={(value) => setPage({ showDevice: value })} label="Device" />
-              <Toggle checked={!!selectedPage.showVerticalBand} onChange={(value) => setPage({ showVerticalBand: value })} label="Bande" />
-              <Toggle checked={!!selectedPage.showTopMeta} onChange={(value) => setPage({ showTopMeta: value })} label="Meta" />
-              <Toggle checked={!!selectedPage.showCorners} onChange={(value) => setPage({ showCorners: value })} label="Corners" />
-              <Toggle checked={!!selectedPage.glow} onChange={(value) => setPage({ glow: value })} label="Glow" />
-              <Toggle checked={!!selectedPage.grain} onChange={(value) => setPage({ grain: value })} label="Grain" />
-              <Toggle checked={!!selectedPage.showScanlines} onChange={(value) => setPage({ showScanlines: value })} label="Scanlines" />
-              {selectedPage.template === "cover" && (
-                <>
-                  <Toggle checked={!!selectedPage.showHeadline} onChange={(value) => setPage({ showHeadline: value })} label="Titre barre" />
-                  <Toggle checked={!!selectedPage.showTicker} onChange={(value) => setPage({ showTicker: value })} label="Ticker" />
-                </>
-              )}
-              {selectedPage.template === "article" && (
-                <>
-                  <Toggle checked={selectedPage.articleShowImageCard !== false} onChange={(value) => setPage({ articleShowImageCard: value })} label="Visuel bas" />
-                </>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Fond page">
-                <Select value={selectedPage.bgMode || "solid"} onChange={(event) => setPage({ bgMode: event.target.value })}>
-                  <option value="solid">solid</option>
-                  <option value="gradient">gradient</option>
-                </Select>
-              </Field>
-              <Field label="Couleur fond">
-                <input
-                  type="color"
-                  value={selectedPage.bgColor || "#0B121A"}
-                  onChange={(event) => setPage({ bgColor: event.target.value })}
-                  className="h-10 w-full rounded-xl border border-cyan-400/20 bg-transparent p-1"
-                />
-              </Field>
-            </div>
           </div>
         )}
       </div>
